@@ -274,10 +274,10 @@ footer{text-align:center;color:var(--muted);font-size:11px;margin-top:24px}
     if(data.eroare || !data.zip_base64){ dlSlot.innerHTML=''; return; }
     var blob = b64ToBlob(data.zip_base64, 'application/zip');
     var url = URL.createObjectURL(blob);
-    var label = data.are_modificari ? 'Arhivă corectată, pregătită de descărcare' : 'Arhivă pregătită (fără modificări, doar raportul)';
+    var label = data.are_modificari ? 'Arhivă corectată, pregătită de descărcare' : 'Arhivă pregătită (fără modificări necesare)';
     dlSlot.innerHTML =
       '<div class="downloadbar"><div class="txt"><h2>' + esc(label) + '</h2>' +
-      '<p>' + esc(data.nume_fisier) + ' · conține și _RAPORT_CORECTII.txt cu lista completă</p></div>' +
+      '<p>' + esc(data.nume_fisier) +
       '<a class="dlbtn" id="dl-link" download="' + esc(data.nume_fisier) + '">⬇ Descarcă arhiva</a></div>';
     document.getElementById('dl-link').href = url;
   }
