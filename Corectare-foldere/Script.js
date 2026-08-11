@@ -852,7 +852,6 @@ if (fixes.length === 0 && excluded.length === 0 && avertismente.length === 0) {
               '</small><br><small>' + esc(toBackSlash(excluded[ex].cale)) + '</small></li>';
     }
     html += '</ul>';
-    if (excluded.length > MAX_HTML_ITEMS) { html += '<p><i>... si inca ' + (excluded.length - MAX_HTML_ITEMS) + '. Lista completa este in _RAPORT_CORECTII.txt din arhiva.</i></p>'; }
   }
 
   if (fixes.length > 0) {
@@ -865,7 +864,6 @@ if (fixes.length === 0 && excluded.length === 0 && avertismente.length === 0) {
               '<br><small>Motiv: ' + esc(fi.motive.join('; ')) + '</small></li>';
     }
     html += '</ul>';
-    if (fixes.length > MAX_HTML_ITEMS) { html += '<p><i>... si inca ' + (fixes.length - MAX_HTML_ITEMS) + '. Lista completa este in _RAPORT_CORECTII.txt din arhiva.</i></p>'; }
   }
 
   if (avertismente.length > 0) {
@@ -883,8 +881,7 @@ if (fixes.length === 0 && excluded.length === 0 && avertismente.length === 0) {
   }
 }
 
-html += '<p><i>Daca alegi "Da", primesti o arhiva .zip cu toate corectiile de mai sus aplicate, ' +
-        'plus un fisier _RAPORT_CORECTII.txt cu lista completa. Arhiva pe care ai incarcat-o nu se modifica.</i></p>';
+html += '<p><i>Daca alegi "Da", primesti o arhiva .zip cu toate corectiile de mai sus aplicate, ';
 
 
 // ------------------------------------------------------- utilitare reconstructie arhiva (din Nodul 2)
@@ -999,9 +996,6 @@ function writeEntry(nameStr, flagsIn, method, mt, md, crcVal, csize, usize, data
   ]));
   written++;
 }
-
-writeEntry(reportName, 0, 0, refModTime, refModDate, reportCrc,
-           reportBytes.length, reportBytes.length, reportBytes, false);
 
 for (var i = 0; i < plan.length; i++) {
   var en = plan[i];
