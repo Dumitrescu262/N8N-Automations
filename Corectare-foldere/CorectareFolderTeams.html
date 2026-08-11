@@ -277,7 +277,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;margin-top:24px}
     var label = data.are_modificari ? 'Arhivă corectată, pregătită de descărcare' : 'Arhivă pregătită (fără modificări necesare)';
     dlSlot.innerHTML =
       '<div class="downloadbar"><div class="txt"><h2>' + esc(label) + '</h2>' +
-      '<p>' + esc(data.nume_fisier) +
+      '<p>' + esc(data.nume_fisier) + '</p></div>' +
       '<a class="dlbtn" id="dl-link" download="' + esc(data.nume_fisier) + '">⬇ Descarcă arhiva</a></div>';
     document.getElementById('dl-link').href = url;
   }
