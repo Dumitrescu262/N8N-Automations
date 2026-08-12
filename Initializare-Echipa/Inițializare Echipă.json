@@ -1,0 +1,1097 @@
+{
+  "name": "Inițializare Echipă",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "initializare-echipa-teams",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "554ee387-2df3-4a9d-a399-37f111bfb974",
+      "name": "Webhook Formular Echipă",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        560
+      ],
+      "webhookId": "72974338-8cf4-41d7-b879-4bf71007a1ce"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "n1",
+              "name": "cod_proiect",
+              "type": "string",
+              "value": "={{ $json.body?.cod_proiect ?? $json.cod_proiect }}"
+            },
+            {
+              "id": "n2",
+              "name": "nume_proiect",
+              "type": "string",
+              "value": "={{ $json.body?.nume_proiect ?? $json.nume_proiect }}"
+            },
+            {
+              "id": "n3",
+              "name": "amplasament",
+              "type": "string",
+              "value": "={{ $json.body?.amplasament ?? $json.amplasament }}"
+            },
+            {
+              "id": "n4",
+              "name": "firma",
+              "type": "string",
+              "value": "={{ $json.body?.firma ?? $json.firma }}"
+            },
+            {
+              "id": "n5",
+              "name": "design_and_build",
+              "type": "string",
+              "value": "={{ $json.body?.design_and_build ?? $json.design_and_build ?? \"Nu\" }}"
+            },
+            {
+              "id": "n6",
+              "name": "responsabil_email",
+              "type": "string",
+              "value": "={{ $json.body?.responsabil_email ?? $json.responsabil_email }}"
+            },
+            {
+              "id": "n7",
+              "name": "canale_suplimentare",
+              "type": "string",
+              "value": "={{ $json.body?.canale_suplimentare ?? $json.canale_suplimentare ?? \"\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8f7fd8ac-7b75-4730-9554-5ebdec4c8a21",
+      "name": "Normalizează Payload Webhook",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        240,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "nume_echipa",
+              "type": "string",
+              "value": "={{ $json.cod_proiect }}_{{ $json.firma }}{{ $json.design_and_build === \"Da\" ? \"_D&B\" : \"\" }}_{{ $json.amplasament }}"
+            },
+            {
+              "id": "c2",
+              "name": "canale_suplimentare_array",
+              "type": "array",
+              "value": "={{ $json.canale_suplimentare ? $json.canale_suplimentare.split(\",\").map(o => o.trim()).filter(o => o) : [] }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "bc23e86b-af2f-438b-acbe-1cb167159e60",
+      "name": "Calculează Nume Echipă & Canale",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        480,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.microsoft.com/v1.0/teams",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"template@odata.bind\": \"https://graph.microsoft.com/v1.0/teamsTemplates('standard')\", \"displayName\": $json.nume_echipa, \"description\": $json.nume_proiect } }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "59cb167c-b772-4185-ab85-08bd32ccd7d8",
+      "name": "Creează Echipa Teams",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        720,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1",
+              "name": "team_id",
+              "type": "string",
+              "value": "={{ $json.headers['content-location'].match(/\\('([^']+)'\\)/)[1] }}"
+            },
+            {
+              "id": "b2",
+              "name": "nume_echipa",
+              "type": "string",
+              "value": "={{ $('Calculează Nume Echipă & Canale').item.json.nume_echipa }}"
+            },
+            {
+              "id": "b3",
+              "name": "nume_proiect",
+              "type": "string",
+              "value": "={{ $('Calculează Nume Echipă & Canale').item.json.nume_proiect }}"
+            },
+            {
+              "id": "b4",
+              "name": "responsabil_email",
+              "type": "string",
+              "value": "={{ $('Calculează Nume Echipă & Canale').item.json.responsabil_email }}"
+            },
+            {
+              "id": "b5",
+              "name": "canale_suplimentare_array",
+              "type": "array",
+              "value": "={{ $('Calculează Nume Echipă & Canale').item.json.canale_suplimentare_array }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "51e59215-a558-4a6c-993a-cecfa8b9fae5",
+      "name": "Extrage Team ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        960,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "id": "d2a8a787-7c19-4b05-ace6-d8dfa7056268",
+      "name": "Așteaptă Provisioning",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        560
+      ],
+      "webhookId": "4d5fe1a3-cdc5-4804-be28-c0418572bb32"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "canale_fixe",
+              "type": "array",
+              "value": "={{ [ { \"name\": \"0.Urgente\", \"tip\": \"standard\" }, { \"name\": \"0.1.Tipizate.Checklists.Proceduri\", \"tip\": \"standard\" }, { \"name\": \"1.Birou Arhitectura\", \"tip\": \"standard\" }, { \"name\": \"2.Birou Structuri\", \"tip\": \"standard\" }, { \"name\": \"3.Birou Instalatii\", \"tip\": \"standard\" }, { \"name\": \"4.Compartiment Devize\", \"tip\": \"standard\" }, { \"name\": \"6.Compartiment Contracte (privat)\", \"tip\": \"private\" }, { \"name\": \"9.1 Drumuri\", \"tip\": \"standard\" }, { \"name\": \"9.2 Verificari Proiect – DTAC 1\", \"tip\": \"standard\" }, { \"name\": \"9.3 Verificari Proiect – DTAC 2\", \"tip\": \"standard\" }, { \"name\": \"9.4 Verificari Proiect – DTAC 3\", \"tip\": \"standard\" }, { \"name\": \"9.5 Verificari Proiect – DTAC 4_ARH\", \"tip\": \"standard\" }, { \"name\": \"9.6 Verificari Proiect – PT.DE 1\", \"tip\": \"standard\" }, { \"name\": \"9.7 Verificari Proiect – PT.DE 2\", \"tip\": \"standard\" }, { \"name\": \"9.8 Verificari Proiect – PT.DE 3\", \"tip\": \"standard\" }, { \"name\": \"9.9 Verificari Proiect – PT.DE 4_ARH\", \"tip\": \"standard\" }, { \"name\": \"9.99999 Corespondenta Oficiala (Privat)\", \"tip\": \"private\" } ] }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "f5bc0d97-42e8-4654-ab40-d0f16e7ccc79",
+      "name": "Canale Fixe Obligatorii (Listă)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1424,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "canale_fixe",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "id": "32acc15a-0db7-4165-89e8-6c9b406fe829",
+      "name": "Împarte Canale Fixe",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "teamId": "={{ $json.team_id }}",
+        "name": "={{ $json.canale_fixe.name }}",
+        "options": {
+          "type": "={{ $json.canale_fixe.tip }}"
+        }
+      },
+      "id": "e0f9ea7d-309d-4dcd-a55a-c6cefa7195f9",
+      "name": "Creează Canal Fix",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        1824,
+        160
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "canale_suplimentare_array",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "id": "d93ede0a-6437-481c-b236-725888886061",
+      "name": "Împarte Canale Suplimentare",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1424,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "teamId": "={{ $json.team_id }}",
+        "name": "={{ $json.canale_suplimentare_array }}",
+        "options": {
+          "type": "standard"
+        }
+      },
+      "id": "bc8357f1-5429-4ef3-923a-2f08ce2ebe40",
+      "name": "Creează Canal Suplimentar",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        1632,
+        368
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $json.team_id + '/primaryChannel' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "18632efa-3463-439d-a89b-576da1611482",
+      "name": "Obține Canalul General",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1424,
+        560
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "teamId": "={{ $('Extrage Team ID').item.json.team_id }}",
+        "channelId": "={{ $json.id }}",
+        "updateFields": {
+          "name": "00.SEDINTE COORDONARE"
+        }
+      },
+      "id": "5fd2935c-5542-4c1f-b031-a538d1a53b79",
+      "name": "Redenumește Canalul General → Coordonare",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        1632,
+        560
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "teamId": "={{ $('Extrage Team ID').item.json.team_id }}",
+        "channelId": "={{ $('Obține Canalul General').item.json.id }}",
+        "message": "=Echipa de proiect {{ $('Extrage Team ID').item.json.nume_echipa }} a fost creată.<br><br>@Achiziții @Juridic - vă rugăm să încărcați: tema completă de proiectare, cantitățile și oferta financiară de la licitație, personalul cheie și clarificările de la licitație (pe server, în Tema proiectare-Documente), respectiv contractul (aici, în 6.Compartiment Contracte (privat)). Răspundeți la acest mesaj când sunt încărcate.",
+        "options": {}
+      },
+      "id": "62d9c2ea-74a1-497c-94e7-7694762410d0",
+      "name": "Postează Mesaj Inițial",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        1824,
+        560
+      ],
+      "executeOnce": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $json.team_id + '/members' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"@odata.type\": \"#microsoft.graph.aadUserConversationMember\", \"roles\": [\"owner\"], \"user@odata.bind\": \"https://graph.microsoft.com/v1.0/users('\" + $json.responsabil_email + \"')\" } }}",
+        "options": {}
+      },
+      "id": "287c5824-b4c8-4d9e-9337-0671ab68e7f9",
+      "name": "Adaugă Responsabil ca Owner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1424,
+        736
+      ],
+      "executeOnce": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "worksheet",
+        "operation": "readRows",
+        "workbook": {
+          "__rl": true,
+          "cachedResultName": "Roster_Echipa_Teams.xlsx",
+          "mode": "id",
+          "value": "0154PUM4RXWSIOKE62G5AZF6RNFZ52ITXU"
+        },
+        "worksheet": {
+          "__rl": true,
+          "cachedResultName": "Roster",
+          "mode": "id",
+          "value": "{00000000-0001-0000-0000-000000000000}"
+        },
+        "options": {}
+      },
+      "id": "066dceff-836b-4314-a47f-40449810c77a",
+      "name": "Citește Roster Fix din Excel",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2.2,
+      "position": [
+        1424,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $('Extrage Team ID').first().json.team_id + '/members' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"@odata.type\": \"#microsoft.graph.aadUserConversationMember\", \"roles\": ((($json.Rol ?? $json.rol ?? '').toString().toLowerCase().includes('owner')) ? [\"owner\"] : []), \"user@odata.bind\": \"https://graph.microsoft.com/v1.0/users('\" + ($json.Email ?? $json.email) + \"')\" } }}",
+        "options": {}
+      },
+      "id": "293d8f84-dbb6-4a70-ad20-b06fe55d37f8",
+      "name": "Adaugă Membru din Roster la Echipă",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1632,
+        944
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "numberInputs": 6
+      },
+      "id": "fc7a1835-3460-4743-8060-15fbb7ff305e",
+      "name": "Așteaptă Finalizare",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3008,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"ok\", \"mesaj\": \"Echipa \" + $('Extrage Team ID').item.json.nume_echipa + \" a fost creată cu succes! Toate canalele obligatorii și membrii din roster au fost adăugați.\" } }}",
+        "options": {}
+      },
+      "id": "8276e87b-ce19-4919-8f18-88ce1b2a0568",
+      "name": "Confirmare Echipă Creată",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3264,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $('Citește Roster Fix din Excel').item.json['Funcție / Taguri'] }}",
+              "operator": {
+                "operation": "notEmpty",
+                "type": "string"
+              },
+              "rightValue": ""
+            },
+            {
+              "leftValue": "={{ $json.userId }}",
+              "operator": {
+                "operation": "notEmpty",
+                "type": "string"
+              },
+              "rightValue": ""
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "id": "17ed305d-a937-4e9d-89fa-b61aef7b84f8",
+      "name": "Filtrează Rânduri cu Tag",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        1872,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "d3b28ce9-4db9-40c9-b131-c4f8d26ab8f9",
+      "name": "Procesează Taguri",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2112,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $('Extrage Team ID').first().json.team_id + '/tags' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "={{ \"displayName eq '\" + $('Citește Roster Fix din Excel').item.json['Funcție / Taguri'] + \"'\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "215d86c8-ed55-45e1-b754-1c2acbd63159",
+      "name": "Caută Tag Existent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2400,
+        1072
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.value.length }}",
+              "operator": {
+                "operation": "gt",
+                "type": "number"
+              },
+              "rightValue": 0
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "id": "03644605-ef83-4bac-a0ab-87456cd52f5f",
+      "name": "Tag Există?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2640,
+        1072
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $('Extrage Team ID').first().json.team_id + '/tags/' + $json.value[0].id + '/members' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"userId\": $('Adaugă Membru din Roster la Echipă').item.json.userId } }}",
+        "options": {}
+      },
+      "id": "be43a5ac-e0f9-4076-9cf5-a4d4185cc2de",
+      "name": "Adaugă la Tag Existent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2880,
+        1056
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $('Extrage Team ID').first().json.team_id + '/tags' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"displayName\": $('Citește Roster Fix din Excel').item.json['Funcție / Taguri'], \"members\": [ { \"userId\": $('Adaugă Membru din Roster la Echipă').item.json.userId } ] } }}",
+        "options": {}
+      },
+      "id": "2fc6fd01-77d8-4e46-921d-ccaece7ae20e",
+      "name": "Creează Tag Nou",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2880,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "teamId": "={{ $('Extrage Team ID').item.json.team_id }}",
+        "channelId": "={{ $('Obține Canalul General').item.json.id }}",
+        "message": "=<strong>Management flux informațional (postări, documente, teme, tracking de informații) pe Teams</strong><br><br>Bună tuturor! Propun următorul flux de lucru privind managementul informației pe Teams:<ul><li>Documentele (dwg, pdf, word, excel) necesare a fi încărcate pe Teams se vor încărca în folderele dedicate din canalele de proiect: 00.SEDINTE COORDONARE, 1.Birou Arhitectura, 2.Birou Structuri, 3.Birou Instalatii, 9.1 Drumuri.<ul><li>Nu se vor lăsa documente la liber, neîncadrate în foldere cu nume clare.</li><li>Structura de foldere din aceste canale este o primă propunere — analizați în funcție de specificul fiecărei specialități și veniți cu feedback și propuneri.</li><li>Nu se vor încărca fișiere direct în folderul de proiect (fără subfolder), pentru un tracking clar.</li></ul></li><li>Pozele se pot lăsa la liber, dar recomandăm să le copiați în foldere dedicate după postare (mutarea pozelor din Files nu afectează postarea).</li><li>Discuțiile între specialități se vor realiza în canalele de obiecte, cu Reply la postările deja existente în fiecare canal, pentru un tracking clar al informațiilor.</li><li>Temele către celelalte specialități (dwg, pdf, word, excel etc.) se încarcă în canalul specialității către care se transmite tema, în folderele dedicate, cu Reply la postările deja existente și link către temă.</li><li>Când o soluție tehnică/problemă/neclaritate se aplică pe mai multe obiecte, se vor menționa în postările de coordonare toți proiectanții implicați pe proiect (inclusiv cei care nu lucrează pe obiectul respectiv).</li><li>Pentru documente care nu sunt Revit, folosiți Folderul Colaborare Subcontractanți – Primite și Transmise din fiecare canal.</li></ul>Mulțumesc frumos!",
+        "options": {}
+      },
+      "id": "135d49af-9603-4113-a536-6ab0f682076e",
+      "name": "Postează Flux Informațional",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        2048,
+        560
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "teamId": "={{ $('Extrage Team ID').item.json.team_id }}",
+        "channelId": "={{ $('Obține Canalul General').item.json.id }}",
+        "message": "=<strong>TEME</strong><br><br>Bună 1.Birou Arhitectura, 2.Birou Structuri, 3.Birou Instalatii, 9.1 Drumuri — în această conversație, cu Reply, se vor transmite temele către celelalte specialități.<br><br>Menționez că pentru transmiterea temelor avem în Teams, în Files – 00.SEDINTE COORDONARE, folderul 07.TEME.",
+        "options": {}
+      },
+      "id": "f4997984-205a-4582-a0a6-a8f731ce1db5",
+      "name": "Postează Teme",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        2272,
+        560
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "or",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.displayName }}",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              },
+              "rightValue": "9.2 Verificari Proiect – DTAC 1"
+            },
+            {
+              "leftValue": "={{ $json.displayName }}",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              },
+              "rightValue": "9.3 Verificari Proiect – DTAC 2"
+            },
+            {
+              "leftValue": "={{ $json.displayName }}",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              },
+              "rightValue": "9.4 Verificari Proiect – DTAC 3"
+            },
+            {
+              "leftValue": "={{ $json.displayName }}",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              },
+              "rightValue": "9.6 Verificari Proiect – PT.DE 1"
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "id": "80338623-31d0-4d90-96ae-5515b4b35fc3",
+      "name": "Filtrează Canale Coordonare",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        2032,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "t1",
+              "name": "mesaj_coordonare",
+              "type": "string",
+              "value": "={{ ({\"9.2 Verificari Proiect – DTAC 1\":\"<strong>Coordonare Arhitectură-Rezistență-Instalații-Drumuri faza DTAC 1</strong><br><br>Bună 1.Birou Arhitectura, 2.Birou Structuri, 3.Birou Instalatii, 9.1 Drumuri — în această conversație, cu Reply, se vor puncta toate subiectele ce țin de coordonarea Rezistență-Arhitectură-Instalații-Drumuri la faza DTAC 1.\",\"9.3 Verificari Proiect – DTAC 2\":\"<strong>Coordonare Arhitectură-Rezistență-Instalații-Drumuri faza DTAC 2</strong><br><br>Bună 1.Birou Arhitectura, 2.Birou Structuri, 3.Birou Instalatii, 9.1 Drumuri — în această conversație, cu Reply, se vor puncta toate subiectele ce țin de coordonarea Rezistență-Arhitectură-Instalații-Drumuri la faza DTAC 2.\",\"9.4 Verificari Proiect – DTAC 3\":\"<strong>Coordonare Arhitectură-Rezistență-Instalații-Drumuri faza DTAC 3</strong><br><br>Bună 1.Birou Arhitectura, 2.Birou Structuri, 3.Birou Instalatii, 9.1 Drumuri — în această conversație, cu Reply, se vor puncta toate subiectele ce țin de coordonarea Rezistență-Arhitectură-Instalații-Drumuri la faza DTAC 3.\",\"9.6 Verificari Proiect – PT.DE 1\":\"<strong>Coordonare Arhitectură-Rezistență-Instalații-Drumuri faza PT.DE 1</strong><br><br>Bună 1.Birou Arhitectura, 2.Birou Structuri, 3.Birou Instalatii, 9.1 Drumuri — în această conversație, cu Reply, se vor puncta toate subiectele ce țin de coordonarea Rezistență-Arhitectură-Instalații-Drumuri la faza PT.DE 1.<br><br>Se pot crea și postări specifice pe topicuri de discuție în afara acestei postări, însă subiectele generale de coordonare pe faza PT.DE 1 le vom centraliza aici.\"})[$json.displayName] ?? \"\" }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "2e7eb1ee-637b-4bd8-a593-c63f6ca9bed8",
+      "name": "Text Postare Coordonare",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2272,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "teamId": "={{ $('Extrage Team ID').first().json.team_id }}",
+        "channelId": "={{ $json.id }}",
+        "message": "={{ $json.mesaj_coordonare }}",
+        "options": {}
+      },
+      "id": "2d3eb9c8-9d1d-4f70-a553-584cebc7e8cc",
+      "name": "Postează Mesaj Coordonare",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        2512,
+        64
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Formular Echipă": {
+      "main": [
+        [
+          {
+            "node": "Normalizează Payload Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizează Payload Webhook": {
+      "main": [
+        [
+          {
+            "node": "Calculează Nume Echipă & Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculează Nume Echipă & Canale": {
+      "main": [
+        [
+          {
+            "node": "Creează Echipa Teams",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creează Echipa Teams": {
+      "main": [
+        [
+          {
+            "node": "Extrage Team ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrage Team ID": {
+      "main": [
+        [
+          {
+            "node": "Așteaptă Provisioning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Așteaptă Provisioning": {
+      "main": [
+        [
+          {
+            "node": "Canale Fixe Obligatorii (Listă)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Împarte Canale Suplimentare",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Obține Canalul General",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Adaugă Responsabil ca Owner",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Citește Roster Fix din Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canale Fixe Obligatorii (Listă)": {
+      "main": [
+        [
+          {
+            "node": "Împarte Canale Fixe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Împarte Canale Fixe": {
+      "main": [
+        [
+          {
+            "node": "Creează Canal Fix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Împarte Canale Suplimentare": {
+      "main": [
+        [
+          {
+            "node": "Creează Canal Suplimentar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obține Canalul General": {
+      "main": [
+        [
+          {
+            "node": "Redenumește Canalul General → Coordonare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redenumește Canalul General → Coordonare": {
+      "main": [
+        [
+          {
+            "node": "Postează Mesaj Inițial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Citește Roster Fix din Excel": {
+      "main": [
+        [
+          {
+            "node": "Adaugă Membru din Roster la Echipă",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creează Canal Fix": {
+      "main": [
+        [
+          {
+            "node": "Filtrează Canale Coordonare",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Așteaptă Finalizare",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Adaugă Membru din Roster la Echipă": {
+      "main": [
+        [
+          {
+            "node": "Filtrează Rânduri cu Tag",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Așteaptă Finalizare",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "Așteaptă Finalizare": {
+      "main": [
+        [
+          {
+            "node": "Confirmare Echipă Creată",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrează Rânduri cu Tag": {
+      "main": [
+        [
+          {
+            "node": "Procesează Taguri",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesează Taguri": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Caută Tag Existent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Caută Tag Existent": {
+      "main": [
+        [
+          {
+            "node": "Tag Există?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Există?": {
+      "main": [
+        [
+          {
+            "node": "Adaugă la Tag Existent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Creează Tag Nou",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adaugă la Tag Existent": {
+      "main": [
+        [
+          {
+            "node": "Procesează Taguri",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creează Tag Nou": {
+      "main": [
+        [
+          {
+            "node": "Procesează Taguri",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postează Mesaj Inițial": {
+      "main": [
+        [
+          {
+            "node": "Postează Flux Informațional",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postează Flux Informațional": {
+      "main": [
+        [
+          {
+            "node": "Postează Teme",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrează Canale Coordonare": {
+      "main": [
+        [
+          {
+            "node": "Text Postare Coordonare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Postare Coordonare": {
+      "main": [
+        [
+          {
+            "node": "Postează Mesaj Coordonare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adaugă Responsabil ca Owner": {
+      "main": [
+        [
+          {
+            "node": "Așteaptă Finalizare",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Postează Mesaj Coordonare": {
+      "main": [
+        [
+          {
+            "node": "Așteaptă Finalizare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creează Canal Suplimentar": {
+      "main": [
+        [
+          {
+            "node": "Așteaptă Finalizare",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Postează Teme": {
+      "main": [
+        [
+          {
+            "node": "Așteaptă Finalizare",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d9e00f99-46c5-4617-b21e-0461bcf5aba1",
+  "meta": {
+    "instanceId": "a6884e6b2ddf8adc0c16b0503b06e4faaaa9137e91ba6022d296144979d7874a"
+  },
+  "nodeGroups": [],
+  "id": "cAB1Jliipr8YdZel",
+  "tags": []
+}
