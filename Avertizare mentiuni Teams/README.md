@@ -1,7 +1,5 @@
 # Avertizare mențiuni Teams fără reply
 
-## Ce face
-
 La fiecare rulare, workflow-ul trece prin toate echipele Teams din care face parte contul conectat, le păstrează doar pe cele „de proiect” (nume care începe cu un cod de 7 cifre, ex. `1234567 - Nume Proiect`), și verifică ultimele mesaje din fiecare canal al acestor echipe. Dacă găsește un mesaj în care cineva a fost menționat (`@Nume`) de cel puțin 2 zile și persoana respectivă nu a scris ea însăși niciun reply în thread, îi trimite un reminder automat ca reply la mesajul original, menționând-o din nou. Fiecare persoană este avertizată o singură dată per mesaj — un jurnal (Data Table) ține evidența avertizărilor deja trimise, ca să nu se repete la fiecare rulare.
 
 ## Programare (trigger)
