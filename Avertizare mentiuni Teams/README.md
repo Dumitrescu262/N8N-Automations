@@ -1,4 +1,4 @@
-# Avertizare mențiuni Teams fără reply — README
+# Avertizare mențiuni Teams fără reply
 
 ## Ce face
 
