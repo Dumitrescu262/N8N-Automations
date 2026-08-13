@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Postare Teams din template</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --border: #e1e4e9;
+    --text: #1c2128;
+    --muted: #6b7280;
+    --accent: #0f4c81;
+    --accent-hover: #0c3d68;
+    --ok-bg: #ecfdf3;
+    --ok-text: #05603a;
+    --err-bg: #fef2f2;
+    --err-text: #991b1b;
+    --field-bg: #fafbfc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 32px 36px;
+    max-width: 600px;
+    width: 100%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  h1 {
+    font-size: 22px;
+    margin: 0 0 4px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0 0 24px;
+    line-height: 1.5;
+  }
+
+  /* progress */
+  .steps {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 26px;
+  }
+  .steps .step {
+    flex: 1;
+    text-align: center;
+    padding-bottom: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .steps .step .n {
+    display: inline-block;
+    width: 18px; height: 18px;
+    line-height: 18px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--muted);
+    font-size: 11px;
+    margin-right: 5px;
+  }
+  .steps .step.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .steps .step.active .n, .steps .step.done .n { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .steps .step.done { color: var(--text); }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    margin-top: 18px;
+  }
+  label .opt {
+    color: var(--muted);
+    font-weight: 400;
+  }
+  input[type="text"],
+  input[type="date"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 0;
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--field-bg);
+    color: var(--text);
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(15,76,129,0.12);
+  }
+  textarea { resize: vertical; min-height: 90px; }
+  #draftTextarea { min-height: 260px; line-height: 1.55; }
+
+  select {
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'><path d='M5.5 7.5l4.5 5 4.5-5z'/></svg>");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px;
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 4px 0 0;
+    line-height: 1.5;
+  }
+
+  .team-tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    background: #eef3f8;
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    margin-bottom: 4px;
+  }
+
+  input[type="file"] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 0;
+    font-size: 13px;
+    background: var(--field-bg);
+  }
+
+  #fileList { margin-top: 8px; }
+  .file-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 7px 10px; border: 1px solid var(--border); background: #fff; margin-top: 6px;
+    font-size: 13px;
+  }
+  .file-row .fname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-row .fsize { color: var(--muted); font-size: 12px; flex-shrink: 0; }
+  .file-row .fremove {
+    border: none; background: none; color: var(--err-text); cursor: pointer;
+    font-size: 13px; font-weight: 700; padding: 0 2px; flex-shrink: 0;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 28px;
+  }
+  button {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 0;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button.primary {
+    flex: 1;
+    background: var(--accent);
+    color: #fff;
+  }
+  button.primary:hover { background: var(--accent-hover); }
+  button.primary:disabled { background: #a9b6c2; cursor: not-allowed; }
+  button.secondary {
+    background: #fff;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  button.secondary:hover { background: #f3f4f6; }
+
+  .status {
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border-radius: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    display: none;
+  }
+  .status.error { background: var(--err-bg); color: var(--err-text); display: block; }
+  .status.success { background: var(--ok-bg); color: var(--ok-text); display: block; }
+
+  .final-wrap { text-align: center; padding: 8px 0 4px; }
+  .final-wrap h2 { font-size: 18px; margin: 0 0 6px; }
+  .final-wrap .hint { text-align: center; margin-bottom: 20px; }
+
+  .hidden { display: none !important; }
+  .footer-hint {
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+    margin-top: 22px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Postare Teams din template</h1>
+  <p class="subtitle">Completează pașii de mai jos pentru a posta un mesaj din template pe canalul Teams potrivit. Mesajul generat este o schiță — o poți edita liber înainte de trimitere.</p>
+
+  <div class="steps" id="progress">
+    <div class="step active" data-i="0"><span class="n">1</span>Echipă</div>
+    <div class="step" data-i="1"><span class="n">2</span>Detalii</div>
+    <div class="step" data-i="2"><span class="n">3</span>Verificare</div>
+  </div>
+
+  <div id="globalBanner" class="status"></div>
+
+  <!-- PAS 1: COD ECHIPA -->
+  <div id="step1">
+    <label for="codEchipa">Cod echipă (7 cifre) *</label>
+    <input type="text" id="codEchipa" placeholder="ex. 2024015" maxlength="7" inputmode="numeric">
+    <div class="hint">Folosit pentru a găsi echipa Teams și canalele ei disponibile.</div>
+
+    <div class="actions">
+      <button class="primary" id="btnContinua">Continuă</button>
+    </div>
+  </div>
+
+  <!-- PAS 2: TIP POSTARE + CANAL + DETALII -->
+  <div id="step2" class="hidden">
+    <div class="team-tag" id="teamTag"></div>
+
+    <label for="tipPostare">Tip postare *</label>
+    <select id="tipPostare"></select>
+
+    <label for="canalSelect">Canal Teams *</label>
+    <select id="canalSelect"></select>
+
+    <div id="dynamicFields"></div>
+
+    <div class="actions">
+      <button class="secondary" id="btnInapoi1">Înapoi</button>
+      <button class="primary" id="btnGenereaza">Generează mesaj</button>
+    </div>
+  </div>
+
+  <!-- PAS 3: SCHITA MESAJ -->
+  <div id="step3" class="hidden">
+    <label for="draftTextarea">Mesaj (editabil)</label>
+    <textarea id="draftTextarea"></textarea>
+    <div class="hint">Aceasta este o schiță generată din template. Poți edita textul liber (sau îl poți lăsa exact așa) înainte de a-l trimite pe Teams.</div>
+
+    <label for="fileInput">Atașamente <span class="opt">(opțional, max. 4 MB / fișier)</span></label>
+    <input type="file" id="fileInput" multiple>
+    <div class="hint">Fișierele se încarcă în folderul Files al canalului și se atașează la mesaj.</div>
+    <div id="fileList"></div>
+
+    <div class="actions">
+      <button class="secondary" id="btnInapoi2">Înapoi</button>
+      <button class="primary" id="btnTrimite">Trimite în Teams</button>
+    </div>
+  </div>
+
+  <!-- FINAL -->
+  <div id="stepDone" class="hidden final-wrap">
+    <h2>Mesajul a fost postat în Teams</h2>
+    <p class="hint">Poți închide această pagină sau poți face o nouă postare.</p>
+    <div class="actions">
+      <button class="primary" id="btnNouaPostare">Postare nouă</button>
+    </div>
+  </div>
+
+  <p class="footer-hint">ECONFAIRE ID · Postare Teams din template</p>
+</div>
+
+<script>
+/* ==================== CONFIG ==================== */
+const BASE = 'https://n8n.econfaire.build/webhook';
+const URL_CAUTA      = BASE + '/postare-teams/cauta-echipa';
+const URL_GENEREAZA  = BASE + '/postare-teams/genereaza-mesaj';
+const URL_TRIMITE    = BASE + '/postare-teams/trimite';
+
+/* ==================== DATE ==================== */
+const TIPURI = [
+  "A. Documentatie proiect pe Teams",
+  "A. Lansare de proiect",
+  "A. Management flux informational",
+  "A. Date generale, antet, cartus, reguli",
+  "B. Studii teren (Topo/Geo)",
+  "B. Certificat de urbanism / Avize",
+  "B. Vizita amplasament",
+  "C. Realizare proiect in ACC",
+  "C. Proiectant extern",
+  "C. Workflow verificari",
+  "D. Sedinta - propunere data (poll disponibilitate)",
+  "D. Sedinta - stabilire data",
+  "D. Sedinta extinsa",
+  "D. Discutii cu executia (solutii tehnice)",
+  "D. Sedinta CTS beneficiar",
+  "D. Sedinta de coordonare",
+  "D. Sedinta coordonare cantitati",
+  "E. Flux de lucru / verificari / reguli",
+  "E. Actualizare documentatie in ACC",
+  "E. Postare coordonare per obiect (DTAC/PTDE)",
+  "F. Predare DTAC/PSI/DTAD",
+  "F. Detach faza intermediara DTAC",
+  "F. Predare documentatie PTDE",
+  "F. Detach PT predat",
+  "F. Mesaj dupa predarea PTDE",
+  "F. Finalizare cantitati",
+  "F. Realizare nota justificativa",
+  "F. Predare DALI (1 exemplar)",
+  "F. Lectii invatate"
+];
+
+function determinaProfil(t){
+  if (t === "D. Sedinta - propunere data (poll disponibilitate)") return "sedinta_poll";
+  if ([
+    "D. Sedinta - stabilire data","D. Sedinta extinsa","D. Discutii cu executia (solutii tehnice)",
+    "D. Sedinta CTS beneficiar","D. Sedinta de coordonare","D. Sedinta coordonare cantitati"
+  ].indexOf(t) >= 0) return "sedinta_data";
+  if (t === "B. Vizita amplasament") return "vizita";
+  if (t.charAt(0) === "F") return "predare";
+  return "info";
+}
+
+// definitia campurilor dinamice per profil (mirroreaza formularele originale din n8n)
+const FIELD_DEFS = {
+  sedinta_poll: [
+    {name:"nume_proiect", label:"Nume proiect", type:"text"},
+    {name:"obiecte", label:"Obiecte", opt:true, type:"text"}
+  ],
+  sedinta_data: [
+    {name:"nume_proiect", label:"Nume proiect", type:"text"},
+    {name:"data", label:"Data", type:"date", required:true},
+    {name:"ora", label:"Ora inceput", type:"text", placeholder:"ex. 14:00", required:true},
+    {name:"ora_sfarsit", label:"Ora sfarsit", type:"text", placeholder:"ex. 15:30", required:true},
+    {name:"sala", label:"Sala", opt:true, type:"text"},
+    {name:"obiecte", label:"Obiecte", opt:true, type:"text"},
+    {name:"link_sau_cale", label:"Link Infobook/RFI/document", opt:true, type:"text"},
+    {name:"detalii", label:"Subiecte / detalii", opt:true, type:"textarea"}
+  ],
+  vizita: [
+    {name:"nume_proiect", label:"Nume proiect", opt:true, type:"text"},
+    {name:"data", label:"Data vizitei", type:"text", placeholder:"ex. 20.03.2025", required:true},
+    {name:"ora", label:"Ora", type:"text", placeholder:"ex. 08:00", required:true},
+    {name:"link_sau_cale", label:"Folder poze / checklist", opt:true, type:"text"},
+    {name:"detalii", label:"Detalii", opt:true, type:"textarea"}
+  ],
+  predare: [
+    {name:"nume_proiect", label:"Nume proiect", opt:true, type:"text"},
+    {name:"data", label:"Data/termen predare", type:"text", placeholder:"ex. 12.07.2025", required:true},
+    {name:"ora", label:"Ora", opt:true, type:"text"},
+    {name:"link_sau_cale", label:"Cale folder predare", opt:true, type:"text"},
+    {name:"detalii", label:"Nr. exemplare / specialitati / responsabili", opt:true, type:"textarea"}
+  ],
+  info: [
+    {name:"nume_proiect", label:"Nume proiect", opt:true, type:"text"},
+    {name:"obiecte", label:"Obiecte / lucrare", opt:true, type:"text"},
+    {name:"link_sau_cale", label:"Link sau cale document", opt:true, type:"text"},
+    {name:"detalii", label:"Detalii (ex. versiune Revit)", opt:true, type:"textarea"}
+  ]
+};
+
+/* ==================== STATE ==================== */
+const state = {
+  cod_echipa:"", teamId:"", channels:[],
+  tip_postare:"", channelId:"", channelName:"", profil:"", fields:{},
+  selectedFiles:[]
+};
+const MAX_FILE_BYTES = 4 * 1024 * 1024; // 4 MB - limita de upload direct in Graph
+
+/* ==================== HELPERS ==================== */
+function showStep(n){
+  ["step1","step2","step3","stepDone"].forEach((id,i)=>{
+    document.getElementById(id).classList.toggle("hidden", i !== n);
+  });
+  document.querySelectorAll("#progress .step").forEach(seg=>{
+    const i = parseInt(seg.dataset.i, 10);
+    seg.classList.toggle("active", i === Math.min(n,2));
+    seg.classList.toggle("done", i < n);
+  });
+  clearBanner();
+}
+function banner(type, msg){
+  const b = document.getElementById("globalBanner");
+  b.className = "status " + type;
+  b.textContent = msg;
+}
+function clearBanner(){
+  const b = document.getElementById("globalBanner");
+  b.className = "status";
+  b.textContent = "";
+}
+function setLoading(btn, loading, labelDefault){
+  btn.disabled = loading;
+  btn.textContent = loading ? "Se procesează…" : labelDefault;
+}
+async function callWebhook(url, payload){
+  const res = await fetch(url, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify(payload)
+  });
+  let data;
+  try { data = await res.json(); } catch(e){ data = null; }
+  if (!res.ok) {
+    const msg = (data && data.error) ? data.error : ("Eroare server (" + res.status + ").");
+    throw new Error(msg);
+  }
+  return data;
+}
+
+/* ==================== PAS 1 ==================== */
+document.getElementById("btnContinua").addEventListener("click", async ()=>{
+  const cod = document.getElementById("codEchipa").value.trim();
+  clearBanner();
+  if (!/^\d{7}$/.test(cod)) {
+    banner("error", "Codul echipei trebuie sa aiba exact 7 cifre.");
+    return;
+  }
+  state.cod_echipa = cod;
+
+  const btn = document.getElementById("btnContinua");
+  setLoading(btn, true, "Continuă");
+  try {
+    const data = await callWebhook(URL_CAUTA, { cod_echipa: cod });
+    if (!data || !data.channels) throw new Error("Raspuns invalid de la server.");
+    state.teamId = data.teamId;
+    state.channels = data.channels;
+    populateStep2();
+    showStep(1);
+  } catch(err){
+    banner("error", err.message || "Nu am putut gasi echipa.");
+  } finally {
+    setLoading(btn, false, "Continuă");
+  }
+});
+
+/* ==================== PAS 2 ==================== */
+const selTip = document.getElementById("tipPostare");
+TIPURI.forEach(t=>{
+  const o = document.createElement("option");
+  o.value = t; o.textContent = t;
+  selTip.appendChild(o);
+});
+
+function populateStep2(){
+  document.getElementById("teamTag").textContent = "Cod echipă: " + state.cod_echipa;
+
+  const sel = document.getElementById("canalSelect");
+  sel.innerHTML = "";
+  const sortedChannels = state.channels.slice().sort((a,b)=>
+    a.displayName.localeCompare(b.displayName, 'ro', {sensitivity:'base'})
+  );
+  sortedChannels.forEach(c=>{
+    const o = document.createElement("option");
+    o.value = c.id; o.textContent = c.displayName;
+    o.dataset.name = c.displayName;
+    sel.appendChild(o);
+  });
+
+  renderDynamicFields();
+}
+
+function renderDynamicFields(){
+  const tip = selTip.value;
+  state.profil = determinaProfil(tip);
+
+  const container = document.getElementById("dynamicFields");
+  container.innerHTML = "";
+  const defs = FIELD_DEFS[state.profil] || FIELD_DEFS.info;
+  defs.forEach(f=>{
+    const lbl = document.createElement("label");
+    lbl.setAttribute("for", "f_" + f.name);
+    lbl.innerHTML = f.label + (f.opt ? ' <span class="opt">(opțional)</span>' : "");
+    container.appendChild(lbl);
+
+    let input;
+    if (f.type === "textarea") {
+      input = document.createElement("textarea");
+    } else {
+      input = document.createElement("input");
+      input.type = f.type === "date" ? "date" : "text";
+      if (f.placeholder) input.placeholder = f.placeholder;
+    }
+    input.id = "f_" + f.name;
+    input.dataset.field = f.name;
+    if (f.required) input.required = true;
+    container.appendChild(input);
+  });
+}
+
+selTip.addEventListener("change", renderDynamicFields);
+
+document.getElementById("btnInapoi1").addEventListener("click", ()=> showStep(0));
+
+document.getElementById("btnGenereaza").addEventListener("click", async ()=>{
+  clearBanner();
+  state.tip_postare = selTip.value;
+
+  const sel = document.getElementById("canalSelect");
+  if (!sel.value) { banner("error", "Alege un canal."); return; }
+  state.channelId = sel.value;
+  state.channelName = sel.options[sel.selectedIndex].dataset.name;
+
+  const defs = FIELD_DEFS[state.profil] || FIELD_DEFS.info;
+  const fields = {};
+  for (const f of defs) {
+    const el = document.getElementById("f_" + f.name);
+    const val = el.value.trim();
+    if (f.required && !val) {
+      banner("error", "Completează câmpul: " + f.label);
+      el.focus();
+      return;
+    }
+    fields[f.name] = val;
+  }
+  state.fields = fields;
+
+  const payload = Object.assign({
+    tip_postare: state.tip_postare,
+    teamId: state.teamId,
+    channelId: state.channelId,
+    channelName: state.channelName
+  }, fields);
+
+  const btn = document.getElementById("btnGenereaza");
+  setLoading(btn, true, "Generează mesaj");
+  try {
+    const data = await callWebhook(URL_GENEREAZA, payload);
+    if (!data || typeof data.message !== "string") throw new Error("Raspuns invalid de la server.");
+    document.getElementById("draftTextarea").value = data.message;
+    showStep(2);
+  } catch(err){
+    banner("error", err.message || "Nu am putut genera mesajul.");
+  } finally {
+    setLoading(btn, false, "Generează mesaj");
+  }
+});
+
+/* ==================== PAS 3 ==================== */
+document.getElementById("btnInapoi2").addEventListener("click", ()=> showStep(1));
+
+function formatBytes(n){
+  if (n < 1024) return n + " B";
+  if (n < 1024*1024) return (n/1024).toFixed(0) + " KB";
+  return (n/(1024*1024)).toFixed(1) + " MB";
+}
+
+function renderFileList(){
+  const box = document.getElementById("fileList");
+  box.innerHTML = "";
+  state.selectedFiles.forEach((f, idx)=>{
+    const row = document.createElement("div");
+    row.className = "file-row";
+    const name = document.createElement("span");
+    name.className = "fname";
+    name.textContent = f.name;
+    const size = document.createElement("span");
+    size.className = "fsize";
+    size.textContent = formatBytes(f.size);
+    const rm = document.createElement("button");
+    rm.type = "button";
+    rm.className = "fremove";
+    rm.textContent = "✕";
+    rm.addEventListener("click", ()=>{
+      state.selectedFiles.splice(idx, 1);
+      renderFileList();
+    });
+    row.appendChild(name);
+    row.appendChild(size);
+    row.appendChild(rm);
+    box.appendChild(row);
+  });
+}
+
+document.getElementById("fileInput").addEventListener("change", (e)=>{
+  clearBanner();
+  const newFiles = Array.from(e.target.files || []);
+  for (const f of newFiles) {
+    if (f.size > MAX_FILE_BYTES) {
+      banner("error", "Fișierul \"" + f.name + "\" depășește 4 MB și nu a fost adăugat.");
+      continue;
+    }
+    state.selectedFiles.push(f);
+  }
+  e.target.value = "";
+  renderFileList();
+});
+
+function fileToBase64(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=> resolve(String(reader.result).split(",")[1] || "");
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById("btnTrimite").addEventListener("click", async ()=>{
+  clearBanner();
+  const msg = document.getElementById("draftTextarea").value;
+  if (!msg.trim()) { banner("error", "Mesajul nu poate fi gol."); return; }
+
+  const btn = document.getElementById("btnTrimite");
+  setLoading(btn, true, "Trimite în Teams");
+  try {
+    const attachments = await Promise.all(state.selectedFiles.map(async f=>({
+      filename: f.name,
+      mimeType: f.type || "application/octet-stream",
+      base64: await fileToBase64(f)
+    })));
+
+    const payload = {
+      message: msg,
+      tip_postare: state.tip_postare,
+      teamId: state.teamId,
+      channelId: state.channelId,
+      channelName: state.channelName,
+      attachments: attachments
+    };
+
+    const data = await callWebhook(URL_TRIMITE, payload);
+    if (!data || data.success !== true) throw new Error("Trimiterea a eșuat.");
+    showStep(3);
+  } catch(err){
+    banner("error", err.message || "Nu am putut trimite mesajul pe Teams.");
+  } finally {
+    setLoading(btn, false, "Trimite în Teams");
+  }
+});
+
+/* ==================== RESTART ==================== */
+document.getElementById("btnNouaPostare").addEventListener("click", ()=>{
+  state.cod_echipa = ""; state.teamId = ""; state.channels = [];
+  state.tip_postare = ""; state.channelId = ""; state.channelName = ""; state.profil = ""; state.fields = {};
+  state.selectedFiles = [];
+  document.getElementById("codEchipa").value = "";
+  renderFileList();
+  showStep(0);
+});
+
+renderDynamicFields();
+showStep(0);
+</script>
+</body>
+</html>
