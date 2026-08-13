@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inițializare Echipă de Proiect</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --border: #e1e4e9;
+    --text: #1c2128;
+    --muted: #6b7280;
+    --accent: #0f4c81;
+    --accent-hover: #0c3d68;
+    --ok-bg: #ecfdf3;
+    --ok-text: #05603a;
+    --err-bg: #fef2f2;
+    --err-text: #991b1b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 32px 36px;
+    max-width: 560px;
+    width: 100%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  h1 {
+    font-size: 22px;
+    margin: 0 0 4px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0 0 28px;
+    line-height: 1.5;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    margin-top: 18px;
+  }
+  label .opt {
+    color: var(--muted);
+    font-weight: 400;
+  }
+  input[type="text"],
+  input[type="email"],
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 0;
+    font-size: 14px;
+    background: #fff;
+    color: var(--text);
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(15,76,129,0.12);
+  }
+  .hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  button {
+    margin-top: 28px;
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 0;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: var(--accent-hover); }
+  button:disabled {
+    background: #a9b6c2;
+    cursor: not-allowed;
+  }
+  .result {
+    display: none;
+    text-align: center;
+    padding: 24px 4px 8px;
+  }
+  .result.show { display: block; }
+  .result-state { display: none; }
+  .result-state.show { display: block; }
+  .spinner {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 18px;
+    border: 4px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .waiting-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .result-detail {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px;
+    border-radius: 0;
+    background: var(--ok-text);
+    color: #fff;
+    font-size: 36px;
+    line-height: 64px;
+    text-align: center;
+  }
+  .success-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--ok-text);
+  }
+  .error-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px;
+    border-radius: 0;
+    background: var(--err-text);
+    color: #fff;
+    font-size: 36px;
+    line-height: 64px;
+    text-align: center;
+  }
+  .error-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--err-text);
+  }
+  .secondary-btn {
+    margin-top: 24px;
+    background: #fff;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .secondary-btn:hover { background: #f0f4f8; }
+  .preview {
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: #f3f4f6;
+    border: 1px dashed var(--border);
+    font-size: 13px;
+  }
+  .preview-label {
+    color: var(--muted);
+    margin-right: 6px;
+  }
+  #namePreview {
+    font-family: "SF Mono", Consolas, monospace;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Inițializare Echipă de Proiect</h1>
+    <p class="subtitle">Completează formularul pentru a crea automat echipa pe Microsoft Teams, canalele obligatorii și a adăuga membrii standard din roster.</p>
+
+    <form id="teamForm">
+    <div id="formFields">
+      <label for="cod_proiect">Cod proiect *</label>
+      <input type="text" id="cod_proiect" name="cod_proiect" required placeholder="ex: 0010826" pattern="\d{7}" maxlength="7" inputmode="numeric">
+      <div class="hint">7 cifre, format AAAMMYY (AAA = nr. de ordine, MM = luna, YY = anul de start). Codul folosit deja în codificarea pieselor scrise/desenate ale proiectului.</div>
+
+      <label for="nume_proiect">Descriere proiect *</label>
+      <input type="text" id="nume_proiect" name="nume_proiect" required placeholder="ex: Ansamblu rezidențial Militari">
+      <div class="hint">Numele/descrierea liberă a proiectului — apare ca descriere a echipei pe Teams, nu ca denumire codificată.</div>
+
+      <label for="amplasament">Amplasament <span class="opt">(Strada_B)</span></label>
+      <input type="text" id="amplasament" name="amplasament" placeholder="ex: Str. Exemplu 12, București  /  Cazarma X, Depozit">
+      <div class="hint">Scurt dar sugestiv: pentru clădiri civile — stradă, număr, oraș; pentru cazarmă — numele cazarmii și funcțiunea.</div>
+
+      <label for="firma">Firma</label>
+      <input type="text" id="firma" name="firma" placeholder="ex: LEV">
+      <div class="hint">De regulă „LEV" (Leviatan) — confirmă cu dep. Juridic dacă e altă firmă. Se introduce exact cum trebuie să apară în denumirea echipei.</div>
+
+      <label for="design_and_build">Design &amp; Build</label>
+      <select id="design_and_build" name="design_and_build">
+        <option value="Nu" selected>Nu</option>
+        <option value="Da">Da</option>
+      </select>
+
+      <div class="preview">
+        <span class="preview-label">Denumire echipă (previzualizare):</span>
+        <span id="namePreview">—</span>
+      </div>
+
+      <label for="responsabil_email">Email responsabil de proiect *</label>
+      <input type="email" id="responsabil_email" name="responsabil_email" required placeholder="nume@leviatan.ro">
+      <div class="hint">Responsabilul e adăugat automat ca owner al echipei — nu-l pune și în roster.</div>
+
+      <label for="canale_suplimentare">Canale suplimentare <span class="opt">(opțional)</span></label>
+      <input type="text" id="canale_suplimentare" name="canale_suplimentare" placeholder="canal 1, canal 2, canal 3">
+      <div class="hint">Separate prin virgulă. Se adaugă peste cele 17 canale obligatorii.</div>
+
+      <button type="submit" id="submitBtn">Creează echipa</button>
+    </div>
+    </form>
+
+    <div class="result" id="resultView">
+      <div class="result-state show" id="waitingState">
+        <div class="spinner"></div>
+        <div class="waiting-title">Se creează echipa pe Teams…</div>
+        <div class="result-detail">Se creează echipa, canalele, se adaugă membrii din roster și se postează mesajele inițiale. Poate dura 1-2 minute — nu închide și nu reîncărca pagina.</div>
+      </div>
+      <div class="result-state" id="successState">
+        <div class="success-icon">&#10003;</div>
+        <div class="success-title">Finalizat cu succes!</div>
+        <div class="result-detail" id="successDetail"></div>
+        <button type="button" class="secondary-btn" id="newTeamBtn">Creează o altă echipă</button>
+      </div>
+      <div class="result-state" id="errorState">
+        <div class="error-icon">&#33;</div>
+        <div class="error-title">Ceva nu a funcționat</div>
+        <div class="result-detail" id="errorDetail"></div>
+        <button type="button" class="secondary-btn" id="retryBtn">Înapoi la formular</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const WEBHOOK_URL = "https://n8n.econfaire.build/webhook/initializare-echipa-teams";
+  const form = document.getElementById("teamForm");
+  const submitBtn = document.getElementById("submitBtn");
+  const namePreview = document.getElementById("namePreview");
+
+  const formFields = document.getElementById("formFields");
+  const resultView = document.getElementById("resultView");
+  const waitingState = document.getElementById("waitingState");
+  const successState = document.getElementById("successState");
+  const errorState = document.getElementById("errorState");
+  const successDetail = document.getElementById("successDetail");
+  const errorDetail = document.getElementById("errorDetail");
+  const newTeamBtn = document.getElementById("newTeamBtn");
+  const retryBtn = document.getElementById("retryBtn");
+
+  function showResultState(state) {
+    [waitingState, successState, errorState].forEach(function (el) {
+      el.classList.toggle("show", el === state);
+    });
+  }
+
+  function showForm() {
+    resultView.classList.remove("show");
+    formFields.style.display = "";
+  }
+
+  function showWaiting() {
+    formFields.style.display = "none";
+    resultView.classList.add("show");
+    showResultState(waitingState);
+  }
+
+  function showSuccess(message) {
+    successDetail.textContent = message || "Echipa a fost creată cu succes pe Teams.";
+    showResultState(successState);
+  }
+
+  function showError(message) {
+    errorDetail.textContent = message;
+    showResultState(errorState);
+  }
+
+  newTeamBtn.addEventListener("click", function () {
+    form.reset();
+    form.design_and_build.value = "Nu";
+    computeNamePreview();
+    showForm();
+  });
+
+  retryBtn.addEventListener("click", showForm);
+
+  // Trebuie să rămână identică cu formula din nodul n8n "Calculează Nume Echipă & Canale":
+  // cod_proiect_FIRMA[_D&B]_amplasament (conform M:\...\0_Structura foldere (001MMYY_FIRMA_D&B_STRADA_B))
+  function computeNamePreview() {
+    const cod = form.cod_proiect.value.trim();
+    const firma = form.firma.value.trim();
+    const db = form.design_and_build.value === "Da" ? "_D&B" : "";
+    const loc = form.amplasament.value.trim();
+    if (!cod && !firma && !loc) {
+      namePreview.textContent = "—";
+      return;
+    }
+    namePreview.textContent = [cod, firma + db, loc].filter(Boolean).join("_");
+  }
+  ["cod_proiect", "firma", "design_and_build", "amplasament"].forEach(function (name) {
+    form[name].addEventListener("input", computeNamePreview);
+    form[name].addEventListener("change", computeNamePreview);
+  });
+
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    showWaiting();
+
+    const payload = {
+      cod_proiect: form.cod_proiect.value.trim(),
+      nume_proiect: form.nume_proiect.value.trim(),
+      amplasament: form.amplasament.value.trim(),
+      firma: form.firma.value.trim(),
+      design_and_build: form.design_and_build.value,
+      responsabil_email: form.responsabil_email.value.trim(),
+      canale_suplimentare: form.canale_suplimentare.value.trim()
+    };
+
+    try {
+      // Fetch-ul rămâne "pending" până workflow-ul n8n termină TOT fluxul
+      // (canale, membri, taguri, mesaje inițiale) și abia apoi răspunde prin
+      // nodul "Confirmare Echipă Creată" — de asta starea de așteptare de mai
+      // sus rămâne vizibilă pe toată durata creării echipei, nu doar la trimitere.
+      const res = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      let data = null;
+      try { data = await res.json(); } catch (_) {}
+
+      if (res.ok) {
+        showSuccess((data && data.mesaj) || "Echipa a fost creată cu succes pe Teams.");
+      } else {
+        showError("Serverul a răspuns cu eroare (" + res.status + "). Verifică workflow-ul în n8n.");
+      }
+    } catch (err) {
+      showError("Nu s-a putut trimite cererea (" + err.message + "). Verifică conexiunea sau setările CORS ale webhook-ului în n8n.");
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
