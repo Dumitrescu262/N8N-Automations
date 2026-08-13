@@ -43,3 +43,6 @@ unde X este numărul de zile scurse de la mesajul original.
 ## Limitări cunoscute
 
 Se verifică doar ultimele 50 de mesaje per canal (configurabil) — o mențiune aflată mai jos în istoricul canalului nu va fi văzută. Mențiunile mai vechi de 14 zile nu mai declanșează niciodată un reminder, chiar dacă persoana tot nu a răspuns. Apelurile către Microsoft Graph (liste de echipe, canale, mesaje, reply-uri) nu implementează paginare (`@odata.nextLink`) — dacă o echipă are foarte multe canale sau un canal foarte multe mesaje/reply-uri într-o singură pagină de rezultate, unele date ar putea să nu fie citite. Se detectează doar mențiuni de persoane individuale, nu mențiuni de canal sau echipă întreagă.
+
+![Workflow 1](images/Workflow1.png)
+![Workflow 2](images/Workflow2.png)
