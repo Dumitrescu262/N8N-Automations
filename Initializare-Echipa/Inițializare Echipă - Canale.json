@@ -1,0 +1,498 @@
+{
+  "name": "Inițializare Echipă - Canale",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "e88c34b3-db00-46d6-8ce1-b0a8ef5a6207",
+      "name": "Primeste Date din Workflow Echipa",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        976
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "canale_fixe",
+              "type": "array",
+              "value": "={{ [ { \"name\": \"0.Urgente\", \"tip\": \"standard\" }, { \"name\": \"0.1.Tipizate.Checklists.Proceduri\", \"tip\": \"standard\" }, { \"name\": \"1.Birou Arhitectura\", \"tip\": \"standard\" }, { \"name\": \"2.Birou Structuri\", \"tip\": \"standard\" }, { \"name\": \"3.Birou Instalatii\", \"tip\": \"standard\" }, { \"name\": \"4.Compartiment Devize\", \"tip\": \"standard\" }, { \"name\": \"6.Compartiment Contracte (privat)\", \"tip\": \"private\" }, { \"name\": \"9.1 Drumuri\", \"tip\": \"standard\" }, { \"name\": \"9.2 Verificari Proiect – DTAC 1\", \"tip\": \"standard\" }, { \"name\": \"9.3 Verificari Proiect – DTAC 2\", \"tip\": \"standard\" }, { \"name\": \"9.4 Verificari Proiect – DTAC 3\", \"tip\": \"standard\" }, { \"name\": \"9.5 Verificari Proiect – DTAC 4_ARH\", \"tip\": \"standard\" }, { \"name\": \"9.6 Verificari Proiect – PT.DE 1\", \"tip\": \"standard\" }, { \"name\": \"9.7 Verificari Proiect – PT.DE 2\", \"tip\": \"standard\" }, { \"name\": \"9.8 Verificari Proiect – PT.DE 3\", \"tip\": \"standard\" }, { \"name\": \"9.9 Verificari Proiect – PT.DE 4_ARH\", \"tip\": \"standard\" }, { \"name\": \"9.99999 Corespondenta Oficiala (Privat)\", \"tip\": \"private\" } ] }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "453d1446-0d30-48dc-9c13-db818e2dc954",
+      "name": "Canale Fixe Obligatorii (Lista)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        784
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "canale_fixe",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "id": "6f035a59-d055-4504-9b8d-ca77f685e9bc",
+      "name": "Imparte Canale Fixe",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        448,
+        784
+      ]
+    },
+    {
+      "parameters": {
+        "teamId": "={{ $json.team_id }}",
+        "name": "={{ $json.canale_fixe.name }}",
+        "options": {
+          "type": "={{ $json.canale_fixe.tip }}"
+        }
+      },
+      "id": "50c692a9-e9a8-483f-b577-e84afed5be28",
+      "name": "Creeaza Canal Fix",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        704,
+        784
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "kc8BiG6HeFHsToIj",
+          "name": "Microsoft Teams account 25"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "or",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.displayName }}",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              },
+              "rightValue": "9.2 Verificari Proiect – DTAC 1"
+            },
+            {
+              "leftValue": "={{ $json.displayName }}",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              },
+              "rightValue": "9.3 Verificari Proiect – DTAC 2"
+            },
+            {
+              "leftValue": "={{ $json.displayName }}",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              },
+              "rightValue": "9.4 Verificari Proiect – DTAC 3"
+            },
+            {
+              "leftValue": "={{ $json.displayName }}",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              },
+              "rightValue": "9.6 Verificari Proiect – PT.DE 1"
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "id": "0a4d944b-1bdc-45a2-ae46-0607c60b70db",
+      "name": "Filtreaza Canale Coordonare",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        912,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "t1",
+              "name": "mesaj_coordonare",
+              "type": "string",
+              "value": "={{ ({\"9.2 Verificari Proiect – DTAC 1\":\"<strong>Coordonare Arhitectură-Rezistență-Instalații-Drumuri faza DTAC 1</strong><br><br>Bună 1.Birou Arhitectura, 2.Birou Structuri, 3.Birou Instalatii, 9.1 Drumuri — în această conversație, cu Reply, se vor puncta toate subiectele ce țin de coordonarea Rezistență-Arhitectură-Instalații-Drumuri la faza DTAC 1.\",\"9.3 Verificari Proiect – DTAC 2\":\"<strong>Coordonare Arhitectură-Rezistență-Instalații-Drumuri faza DTAC 2</strong><br><br>Bună 1.Birou Arhitectura, 2.Birou Structuri, 3.Birou Instalatii, 9.1 Drumuri — în această conversație, cu Reply, se vor puncta toate subiectele ce țin de coordonarea Rezistență-Arhitectură-Instalații-Drumuri la faza DTAC 2.\",\"9.4 Verificari Proiect – DTAC 3\":\"<strong>Coordonare Arhitectură-Rezistență-Instalații-Drumuri faza DTAC 3</strong><br><br>Bună 1.Birou Arhitectura, 2.Birou Structuri, 3.Birou Instalatii, 9.1 Drumuri — în această conversație, cu Reply, se vor puncta toate subiectele ce țin de coordonarea Rezistență-Arhitectură-Instalații-Drumuri la faza DTAC 3.\",\"9.6 Verificari Proiect – PT.DE 1\":\"<strong>Coordonare Arhitectură-Rezistență-Instalații-Drumuri faza PT.DE 1</strong><br><br>Bună 1.Birou Arhitectura, 2.Birou Structuri, 3.Birou Instalatii, 9.1 Drumuri — în această conversație, cu Reply, se vor puncta toate subiectele ce țin de coordonarea Rezistență-Arhitectură-Instalații-Drumuri la faza PT.DE 1.<br><br>Se pot crea și postări specifice pe topicuri de discuție în afara acestei postări, însă subiectele generale de coordonare pe faza PT.DE 1 le vom centraliza aici.\"})[$json.displayName] ?? \"\" }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "69daaea4-735c-49c7-8fc6-8ae9c28daf35",
+      "name": "Text Postare Coordonare",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1152,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "teamId": "={{ $('Primeste Date din Workflow Echipa').first().json.team_id }}",
+        "channelId": "={{ $json.id }}",
+        "message": "={{ $json.mesaj_coordonare }}",
+        "options": {}
+      },
+      "id": "fa15f19d-1ff2-4e7a-a322-50d97e79419e",
+      "name": "Posteaza Mesaj Coordonare",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        1408,
+        640
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "kc8BiG6HeFHsToIj",
+          "name": "Microsoft Teams account 25"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "canale_suplimentare_array",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "id": "a2fdb1b7-e0d7-4686-a83f-78715992065a",
+      "name": "Imparte Canale Suplimentare",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        224,
+        976
+      ]
+    },
+    {
+      "parameters": {
+        "teamId": "={{ $json.team_id }}",
+        "name": "={{ $json.canale_suplimentare_array }}",
+        "options": {
+          "type": "standard"
+        }
+      },
+      "id": "1c543c54-725e-4cc1-9af8-b2012df51d11",
+      "name": "Creeaza Canal Suplimentar",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        976
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "kc8BiG6HeFHsToIj",
+          "name": "Microsoft Teams account 25"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "teamId": "={{ $('Primeste Date din Workflow Echipa').first().json.team_id }}",
+        "channelId": "={{ $('Primeste Date din Workflow Echipa').first().json.canal_general_id }}",
+        "message": "=Echipa de proiect {{ $('Primeste Date din Workflow Echipa').first().json.nume_echipa }} a fost creată.<br><br>@Achiziții @Juridic - vă rugăm să încărcați: tema completă de proiectare, cantitățile și oferta financiară de la licitație, personalul cheie și clarificările de la licitație (pe server, în Tema proiectare-Documente), respectiv contractul (aici, în 6.Compartiment Contracte (privat)). Răspundeți la acest mesaj când sunt încărcate.",
+        "options": {}
+      },
+      "id": "939209ba-a6c4-4a55-9b04-970debb80fbc",
+      "name": "Posteaza Mesaj Initial",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        1184
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "kc8BiG6HeFHsToIj",
+          "name": "Microsoft Teams account 25"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "teamId": "={{ $('Primeste Date din Workflow Echipa').first().json.team_id }}",
+        "channelId": "={{ $('Primeste Date din Workflow Echipa').first().json.canal_general_id }}",
+        "message": "=<strong>Management flux informațional (postări, documente, teme, tracking de informații) pe Teams</strong><br><br>Bună tuturor! Propun următorul flux de lucru privind managementul informației pe Teams:<ul><li>Documentele (dwg, pdf, word, excel) necesare a fi încărcate pe Teams se vor încărca în folderele dedicate din canalele de proiect: 00.SEDINTE COORDONARE, 1.Birou Arhitectura, 2.Birou Structuri, 3.Birou Instalatii, 9.1 Drumuri.<ul><li>Nu se vor lăsa documente la liber, neîncadrate în foldere cu nume clare.</li><li>Structura de foldere din aceste canale este o primă propunere — analizați în funcție de specificul fiecărei specialități și veniți cu feedback și propuneri.</li><li>Nu se vor încărca fișiere direct în folderul de proiect (fără subfolder), pentru un tracking clar.</li></ul></li><li>Pozele se pot lăsa la liber, dar recomandăm să le copiați în foldere dedicate după postare (mutarea pozelor din Files nu afectează postarea).</li><li>Discuțiile între specialități se vor realiza în canalele de obiecte, cu Reply la postările deja existente în fiecare canal, pentru un tracking clar al informațiilor.</li><li>Temele către celelalte specialități (dwg, pdf, word, excel etc.) se încarcă în canalul specialității către care se transmite tema, în folderele dedicate, cu Reply la postările deja existente și link către temă.</li><li>Când o soluție tehnică/problemă/neclaritate se aplică pe mai multe obiecte, se vor menționa în postările de coordonare toți proiectanții implicați pe proiect (inclusiv cei care nu lucrează pe obiectul respectiv).</li><li>Pentru documente care nu sunt Revit, folosiți Folderul Colaborare Subcontractanți – Primite și Transmise din fiecare canal.</li></ul>Mulțumesc frumos!",
+        "options": {}
+      },
+      "id": "fd307290-0488-4fb2-a5f9-d39142143ca6",
+      "name": "Posteaza Flux Informational",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        464,
+        1184
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "kc8BiG6HeFHsToIj",
+          "name": "Microsoft Teams account 25"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "teamId": "={{ $('Primeste Date din Workflow Echipa').first().json.team_id }}",
+        "channelId": "={{ $('Primeste Date din Workflow Echipa').first().json.canal_general_id }}",
+        "message": "=<strong>TEME</strong><br><br>Bună 1.Birou Arhitectura, 2.Birou Structuri, 3.Birou Instalatii, 9.1 Drumuri — în această conversație, cu Reply, se vor transmite temele către celelalte specialități.<br><br>Menționez că pentru transmiterea temelor avem în Teams, în Files – 00.SEDINTE COORDONARE, folderul 07.TEME.",
+        "options": {}
+      },
+      "id": "9b531345-5b65-4537-adb6-76ffb3a70edc",
+      "name": "Posteaza Teme",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        704,
+        1184
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "kc8BiG6HeFHsToIj",
+          "name": "Microsoft Teams account 25"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "numberInputs": 4
+      },
+      "id": "2736501c-2f1b-4a7c-8840-bd5caf224bee",
+      "name": "Asteapta Finalizare Canale",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1584,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { status: 'ok', mesaj: 'Canalele fixe si suplimentare au fost create, iar mesajele initiale, de flux, de teme si de coordonare au fost postate.' } }];"
+      },
+      "id": "c63ff949-bb14-44b0-859e-1e46b8306dc1",
+      "name": "Confirmare Canale Finalizate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1808,
+        976
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Primeste Date din Workflow Echipa": {
+      "main": [
+        [
+          {
+            "node": "Canale Fixe Obligatorii (Lista)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Imparte Canale Suplimentare",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Posteaza Mesaj Initial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canale Fixe Obligatorii (Lista)": {
+      "main": [
+        [
+          {
+            "node": "Imparte Canale Fixe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imparte Canale Fixe": {
+      "main": [
+        [
+          {
+            "node": "Creeaza Canal Fix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creeaza Canal Fix": {
+      "main": [
+        [
+          {
+            "node": "Filtreaza Canale Coordonare",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Asteapta Finalizare Canale",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Filtreaza Canale Coordonare": {
+      "main": [
+        [
+          {
+            "node": "Text Postare Coordonare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Postare Coordonare": {
+      "main": [
+        [
+          {
+            "node": "Posteaza Mesaj Coordonare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Posteaza Mesaj Coordonare": {
+      "main": [
+        [
+          {
+            "node": "Asteapta Finalizare Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imparte Canale Suplimentare": {
+      "main": [
+        [
+          {
+            "node": "Creeaza Canal Suplimentar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creeaza Canal Suplimentar": {
+      "main": [
+        [
+          {
+            "node": "Asteapta Finalizare Canale",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Posteaza Mesaj Initial": {
+      "main": [
+        [
+          {
+            "node": "Posteaza Flux Informational",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Posteaza Flux Informational": {
+      "main": [
+        [
+          {
+            "node": "Posteaza Teme",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Posteaza Teme": {
+      "main": [
+        [
+          {
+            "node": "Asteapta Finalizare Canale",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Asteapta Finalizare Canale": {
+      "main": [
+        [
+          {
+            "node": "Confirmare Canale Finalizate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "47d48d74-cf23-430a-929c-7dc42e044a1e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a6884e6b2ddf8adc0c16b0503b06e4faaaa9137e91ba6022d296144979d7874a"
+  },
+  "nodeGroups": [],
+  "id": "JKSmbresZOAsMqJH",
+  "tags": []
+}

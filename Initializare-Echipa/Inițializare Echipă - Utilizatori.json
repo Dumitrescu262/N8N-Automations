@@ -1,0 +1,447 @@
+{
+  "name": "Inițializare Echipă - Utilizatori",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "6c91d578-4b01-43f9-9ac4-e1f0188dd8ab",
+      "name": "Primeste Date din Workflow Canale",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $json.team_id + '/members' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"@odata.type\": \"#microsoft.graph.aadUserConversationMember\", \"roles\": [\"owner\"], \"user@odata.bind\": \"https://graph.microsoft.com/v1.0/users('\" + $json.responsabil_email + \"')\" } }}",
+        "options": {}
+      },
+      "id": "06a10b80-6f36-4675-b5d4-090a6536ee90",
+      "name": "Adauga Responsabil ca Owner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        656
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "kc8BiG6HeFHsToIj",
+          "name": "Microsoft Teams account 25"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "worksheet",
+        "operation": "readRows",
+        "workbook": {
+          "__rl": true,
+          "cachedResultName": "Roster_Echipa_Teams.xlsx",
+          "mode": "id",
+          "value": "0154PUM4RXWSIOKE62G5AZF6RNFZ52ITXU"
+        },
+        "worksheet": {
+          "__rl": true,
+          "cachedResultName": "Roster",
+          "mode": "id",
+          "value": "{00000000-0001-0000-0000-000000000000}"
+        },
+        "options": {}
+      },
+      "id": "9e835bf6-fae4-4046-b044-f95ff6a48e67",
+      "name": "Citeste Roster Fix din Excel",
+      "type": "n8n-nodes-base.microsoftExcel",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $('Primeste Date din Workflow Canale').first().json.team_id + '/members' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"@odata.type\": \"#microsoft.graph.aadUserConversationMember\", \"roles\": ((($json.Rol ?? $json.rol ?? '').toString().toLowerCase().includes('owner')) ? [\"owner\"] : []), \"user@odata.bind\": \"https://graph.microsoft.com/v1.0/users('\" + ($json.Email ?? $json.email) + \"')\" } }}",
+        "options": {}
+      },
+      "id": "6b700c08-a0d0-4420-8789-c1413368e1b4",
+      "name": "Adauga Membru din Roster la Echipa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        448,
+        864
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "kc8BiG6HeFHsToIj",
+          "name": "Microsoft Teams account 25"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $('Citeste Roster Fix din Excel').item.json['Funcție / Taguri'] }}",
+              "operator": {
+                "operation": "notEmpty",
+                "type": "string"
+              },
+              "rightValue": ""
+            },
+            {
+              "leftValue": "={{ $json.userId }}",
+              "operator": {
+                "operation": "notEmpty",
+                "type": "string"
+              },
+              "rightValue": ""
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "id": "49c0faf4-cfb1-4aa5-b6d3-006df73282cc",
+      "name": "Filtreaza Randuri cu Tag",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        704,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "bac64fe4-41d9-44ac-891e-abedf429c7c8",
+      "name": "Proceseaza Taguri",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        912,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $('Primeste Date din Workflow Canale').first().json.team_id + '/tags' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$filter",
+              "value": "={{ \"displayName eq '\" + $('Citeste Roster Fix din Excel').item.json['Funcție / Taguri'] + \"'\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3e041fcc-dea4-4af8-979c-fc9b690bf960",
+      "name": "Cauta Tag Existent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1152,
+        880
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "kc8BiG6HeFHsToIj",
+          "name": "Microsoft Teams account 25"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.value.length }}",
+              "operator": {
+                "operation": "gt",
+                "type": "number"
+              },
+              "rightValue": 0
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "id": "2154d2f8-0a1d-443b-bf16-2ecb6b424cfe",
+      "name": "Tag Exista?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1392,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $('Primeste Date din Workflow Canale').first().json.team_id + '/tags/' + $json.value[0].id + '/members' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"userId\": $('Adauga Membru din Roster la Echipa').item.json.userId } }}",
+        "options": {}
+      },
+      "id": "32dd43a4-7254-45f9-94be-3ff63ad7d5b3",
+      "name": "Adauga la Tag Existent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1648,
+        864
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "kc8BiG6HeFHsToIj",
+          "name": "Microsoft Teams account 25"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $('Primeste Date din Workflow Canale').first().json.team_id + '/tags' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"displayName\": $('Citeste Roster Fix din Excel').item.json['Funcție / Taguri'], \"members\": [ { \"userId\": $('Adauga Membru din Roster la Echipa').item.json.userId } ] } }}",
+        "options": {}
+      },
+      "id": "d7fb5320-9f3b-4f88-bff9-3c63b7567d74",
+      "name": "Creeaza Tag Nou",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1664,
+        1072
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "kc8BiG6HeFHsToIj",
+          "name": "Microsoft Teams account 25"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "43754428-36bd-4fd0-ac67-a7d69c2145a6",
+      "name": "Asteapta Finalizare Utilizatori",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        688,
+        672
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { status: 'ok', mesaj: 'Responsabil adaugat ca owner, membrii din roster adaugati in echipa si tagurile procesate.' } }];"
+      },
+      "id": "8d40080c-7b90-492d-848e-173de841ed95",
+      "name": "Confirmare Utilizatori Adaugati",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        672
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Primeste Date din Workflow Canale": {
+      "main": [
+        [
+          {
+            "node": "Adauga Responsabil ca Owner",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Citeste Roster Fix din Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Citeste Roster Fix din Excel": {
+      "main": [
+        [
+          {
+            "node": "Adauga Membru din Roster la Echipa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adauga Membru din Roster la Echipa": {
+      "main": [
+        [
+          {
+            "node": "Filtreaza Randuri cu Tag",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Asteapta Finalizare Utilizatori",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Adauga Responsabil ca Owner": {
+      "main": [
+        [
+          {
+            "node": "Asteapta Finalizare Utilizatori",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtreaza Randuri cu Tag": {
+      "main": [
+        [
+          {
+            "node": "Proceseaza Taguri",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Proceseaza Taguri": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Cauta Tag Existent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cauta Tag Existent": {
+      "main": [
+        [
+          {
+            "node": "Tag Exista?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Exista?": {
+      "main": [
+        [
+          {
+            "node": "Adauga la Tag Existent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Creeaza Tag Nou",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adauga la Tag Existent": {
+      "main": [
+        [
+          {
+            "node": "Proceseaza Taguri",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creeaza Tag Nou": {
+      "main": [
+        [
+          {
+            "node": "Proceseaza Taguri",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asteapta Finalizare Utilizatori": {
+      "main": [
+        [
+          {
+            "node": "Confirmare Utilizatori Adaugati",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "fb51dfe8-0d4c-4a46-bf49-ca154ea5ce88",
+  "meta": {
+    "instanceId": "a6884e6b2ddf8adc0c16b0503b06e4faaaa9137e91ba6022d296144979d7874a"
+  },
+  "nodeGroups": [],
+  "id": "hSM4BGmzwfmMsKYI",
+  "tags": []
+}
