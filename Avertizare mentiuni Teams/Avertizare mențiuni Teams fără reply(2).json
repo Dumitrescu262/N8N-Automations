@@ -1,0 +1,667 @@
+{
+  "name": "Avertizare mențiuni Teams fără reply",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8-16 * * *"
+            }
+          ]
+        }
+      },
+      "id": "1eac30af-5736-4aed-a277-402d4c92cae2",
+      "name": "Programare - din oră în oră (8-16)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg-1",
+              "name": "mentionDelayDays",
+              "type": "number",
+              "value": 2
+            },
+            {
+              "id": "cfg-2",
+              "name": "maxLookbackDays",
+              "type": "number",
+              "value": 14
+            },
+            {
+              "id": "cfg-3",
+              "name": "messagesPerChannel",
+              "type": "number",
+              "value": 50
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "518b4c1a-21ed-4af6-b8b7-93bb6514d310",
+      "name": "Configurare Prag",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://graph.microsoft.com/v1.0/me/joinedTeams",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "5ee53f6d-56f3-44ea-b8d9-3299497372c6",
+      "name": "Obține Echipele Mele",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        80
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "value",
+        "options": {}
+      },
+      "id": "87f18c29-e9f4-4e5b-9289-481f63188d16",
+      "name": "Extrage Echipele",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        672,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.microsoft.com/v1.0/teams/{{ $json.id }}/channels",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "0e09ab30-87f7-4be4-ba6e-803cd9869b98",
+      "name": "Obține Canale",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1344,
+        96
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst out = [];\nfor (let i = 0; i < items.length; i++) {\n  const resp = items[i].json;\n  const team = $('Buclă Echipe').itemMatching(i).json;\n  const channels = resp.value || [];\n  for (const ch of channels) {\n    out.push({ json: { teamId: team.id, teamName: team.displayName, channelId: ch.id, channelName: ch.displayName } });\n  }\n}\nreturn out;"
+      },
+      "id": "c7d35da6-940b-4946-83ca-3eb530ac1055",
+      "name": "Pregătește Lista Canalelor",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "7c4e6e4e-9287-485e-bb21-4e31c57da8de",
+      "name": "Buclă Echipe",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1104,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.microsoft.com/v1.0/teams/{{ $json.teamId }}/channels/{{ $json.channelId }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$top",
+              "value": "={{ $('Configurare Prag').first().json.messagesPerChannel }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8698e246-7ec7-4bb2-9852-c102586387bc",
+      "name": "Obține Mesaje Canal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2128,
+        112
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst cfg = $('Configurare Prag').first().json;\nconst now = Date.now();\nconst mentionDelayMs = (cfg.mentionDelayDays || 2) * 24 * 60 * 60 * 1000;\nconst maxLookbackMs = (cfg.maxLookbackDays || 14) * 24 * 60 * 60 * 1000;\nconst out = [];\nfor (let i = 0; i < items.length; i++) {\n  const resp = items[i].json;\n  const channel = $('Buclă Canale').itemMatching(i).json;\n  const messages = resp.value || [];\n  for (const m of messages) {\n    if (m.deletedDateTime) continue;\n    if (!m.mentions || m.mentions.length === 0) continue;\n    const created = new Date(m.createdDateTime).getTime();\n    const age = now - created;\n    if (age < mentionDelayMs) continue;\n    if (age > maxLookbackMs) continue;\n    const seenUserIds = {};\n    const userMentions = [];\n    for (const mm of m.mentions) {\n      if (mm.mentioned && mm.mentioned.user && mm.mentioned.user.id) {\n        const uid = mm.mentioned.user.id;\n        if (!seenUserIds[uid]) {\n          seenUserIds[uid] = true;\n          userMentions.push({ id: uid, displayName: mm.mentioned.user.displayName || mm.mentionText });\n        }\n      }\n    }\n    if (userMentions.length === 0) continue;\n    out.push({ json: {\n      teamId: channel.teamId, teamName: channel.teamName,\n      channelId: channel.channelId, channelName: channel.channelName,\n      messageId: m.id, createdDateTime: m.createdDateTime, webUrl: m.webUrl || '',\n      userMentions: userMentions\n    } });\n  }\n}\nreturn out;"
+      },
+      "id": "29a6e4be-0009-4cc4-99f6-d8e675cc3796",
+      "name": "Filtrează Mențiuni Vechi de 2+ Zile",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2368,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.microsoft.com/v1.0/teams/{{ $json.teamId }}/channels/{{ $json.channelId }}/messages/{{ $json.messageId }}/replies",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "586f97e6-ce53-4fef-9f7f-265b440fcbde",
+      "name": "Obține Reply-uri Mesaj",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2592,
+        112
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst out = [];\nfor (let i = 0; i < items.length; i++) {\n  const replies = (items[i].json.value) || [];\n  const cand = $('Filtrează Mențiuni Vechi de 2+ Zile').itemMatching(i).json;\n  for (const um of cand.userMentions) {\n    const replied = replies.some(function (r) { return r.from && r.from.user && r.from.user.id === um.id; });\n    if (!replied) {\n      out.push({ json: {\n        teamId: cand.teamId, teamName: cand.teamName,\n        channelId: cand.channelId, channelName: cand.channelName,\n        messageId: cand.messageId, createdDateTime: cand.createdDateTime, webUrl: cand.webUrl,\n        mentionedUserId: um.id, mentionedUserName: um.displayName,\n        notificationKey: cand.channelId + '_' + cand.messageId + '_' + um.id\n      } });\n    }\n  }\n}\nreturn out;"
+      },
+      "id": "29d5b5d0-7094-4ac1-bdfd-8aab5f648980",
+      "name": "Verifică Cine Nu a Răspuns",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2816,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "rowNotExists",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "hkcOEOQJKJE6mWBx",
+          "cachedResultName": "teams_mention_reminders"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "notificationKey",
+              "keyValue": "={{ $json.notificationKey }}"
+            }
+          ]
+        }
+      },
+      "id": "33db59e0-143f-4d7e-b14e-ff72967f036c",
+      "name": "Verifică Dacă a Fost Deja Avertizat",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3040,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const f = $json;\nconst days = Math.floor((Date.now() - new Date(f.createdDateTime).getTime()) / 86400000);\nconst text = '<at id=\"0\">' + f.mentionedUserName + '</at> reminder: ai fost mentionat/a in acest mesaj acum ' + days + ' zile si inca nu ai raspuns. Te rugam sa raspunzi cat mai curand.';\nreturn { json: Object.assign({}, f, {\n  replyContent: text,\n  replyMentions: [ { id: 0, mentionText: f.mentionedUserName, mentioned: { user: { id: f.mentionedUserId, displayName: f.mentionedUserName, userIdentityType: 'aadUser' } } } ]\n}) };"
+      },
+      "id": "6d33b83f-f51e-429e-8d57-e7077c7e8e9d",
+      "name": "Compune Mesajul de Avertizare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3264,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.microsoft.com/v1.0/teams/{{ $json.teamId }}/channels/{{ $json.channelId }}/messages/{{ $json.messageId }}/replies",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ body: { contentType: \"html\", content: $json.replyContent }, mentions: $json.replyMentions }) }}",
+        "options": {}
+      },
+      "id": "ad485e65-1542-4436-9d25-792c8a24dc7e",
+      "name": "Trimite Reminder (Reply în Canal)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        3488,
+        112
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "hkcOEOQJKJE6mWBx",
+          "cachedResultName": "teams_mention_reminders"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "notificationKey": "={{ $('Compune Mesajul de Avertizare').item.json.notificationKey }}",
+            "teamName": "={{ $('Compune Mesajul de Avertizare').item.json.teamName }}",
+            "channelName": "={{ $('Compune Mesajul de Avertizare').item.json.channelName }}",
+            "mentionedUserName": "={{ $('Compune Mesajul de Avertizare').item.json.mentionedUserName }}",
+            "messageId": "={{ $('Compune Mesajul de Avertizare').item.json.messageId }}",
+            "notifiedAt": "={{ $now.toISO() }}"
+          },
+          "schema": [
+            {
+              "id": "notificationKey",
+              "displayName": "notificationKey",
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "teamName",
+              "displayName": "teamName",
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "channelName",
+              "displayName": "channelName",
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mentionedUserName",
+              "displayName": "mentionedUserName",
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "messageId",
+              "displayName": "messageId",
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notifiedAt",
+              "displayName": "notifiedAt",
+              "type": "dateTime",
+              "display": true,
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9cc1a129-d039-44a3-ac5b-a43617472094",
+      "name": "Înregistrează Avertizarea Trimisă",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3712,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "d152175b-a523-4ba7-acc9-be119681d0ca",
+      "name": "Buclă Canale",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1824,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FAZA 1 — Colectare echipe și canale\n\nLa fiecare 4 ore: se ia lista echipelor Teams din care face parte contul conectat (joinedTeams), se păstrează DOAR echipele de proiect (nume care începe cu 7 cifre, ex: 1234567 - Nume Proiect), apoi se iau canalele fiecărei echipe rămase.",
+        "height": 248,
+        "width": 300,
+        "color": 4
+      },
+      "id": "6c1684d7-c2e6-4fd7-89a4-bd5468786aa9",
+      "name": "Sticky Note 4c848f6f",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        176,
+        -288
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FAZA 2 — Detectare mențiuni fără reply\n\nPentru fiecare canal se iau ultimele mesaje (configurabil, implicit 50). Se păstrează doar mesajele cu mențiuni de persoane, mai vechi de 2 zile (configurabil) și nu mai vechi de 14 zile. Pentru fiecare astfel de mesaj se verifică reply-urile din thread: dacă persoana menționată nu a scris ea însăși niciun reply, e considerată \"nu a răspuns\".",
+        "height": 328,
+        "width": 300,
+        "color": 5
+      },
+      "id": "fb27e1db-0465-41cb-9e77-239e6fd72e9a",
+      "name": "Sticky Note 61a53f58",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2576,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FAZA 3 — Avertizare + anti-duplicare\n\nÎnainte de a trimite avertismentul se verifică în Data Table \"teams_mention_reminders\" dacă persoana a mai fost avertizată pentru acest mesaj (ca să nu se trimită de mai multe ori la fiecare rulare). Dacă nu a fost avertizată încă: se trimite un Reply în thread-ul original care o menționează, apoi se înregistrează avertizarea în Data Table.",
+        "height": 344,
+        "width": 300,
+        "color": 3
+      },
+      "id": "26d9712f-7547-4ca4-a3b5-6cf7a7ceae07",
+      "name": "Sticky Note 4ee91c13",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3328,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "proj-1",
+              "leftValue": "={{ $json.displayName }}",
+              "operator": {
+                "operation": "regex",
+                "type": "string"
+              },
+              "rightValue": "^\\d{7}"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "34fcff6c-1675-4e65-96b8-955a3dfc669a",
+      "name": "Filtrează Doar Echipele de Proiect",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        880,
+        80
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Configurare Prag": {
+      "main": [
+        [
+          {
+            "node": "Obține Echipele Mele",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obține Echipele Mele": {
+      "main": [
+        [
+          {
+            "node": "Extrage Echipele",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obține Canale": {
+      "main": [
+        [
+          {
+            "node": "Pregătește Lista Canalelor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregătește Lista Canalelor": {
+      "main": [
+        [
+          {
+            "node": "Buclă Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buclă Echipe": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Obține Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obține Mesaje Canal": {
+      "main": [
+        [
+          {
+            "node": "Filtrează Mențiuni Vechi de 2+ Zile",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Buclă Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrează Mențiuni Vechi de 2+ Zile": {
+      "main": [
+        [
+          {
+            "node": "Obține Reply-uri Mesaj",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obține Reply-uri Mesaj": {
+      "main": [
+        [
+          {
+            "node": "Verifică Cine Nu a Răspuns",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifică Cine Nu a Răspuns": {
+      "main": [
+        [
+          {
+            "node": "Verifică Dacă a Fost Deja Avertizat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifică Dacă a Fost Deja Avertizat": {
+      "main": [
+        [
+          {
+            "node": "Compune Mesajul de Avertizare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compune Mesajul de Avertizare": {
+      "main": [
+        [
+          {
+            "node": "Trimite Reminder (Reply în Canal)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trimite Reminder (Reply în Canal)": {
+      "main": [
+        [
+          {
+            "node": "Înregistrează Avertizarea Trimisă",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buclă Canale": {
+      "main": [
+        [
+          {
+            "node": "Buclă Echipe",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Obține Mesaje Canal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrage Echipele": {
+      "main": [
+        [
+          {
+            "node": "Filtrează Doar Echipele de Proiect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrează Doar Echipele de Proiect": {
+      "main": [
+        [
+          {
+            "node": "Buclă Echipe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Programare - din oră în oră (8-16)": {
+      "main": [
+        [
+          {
+            "node": "Configurare Prag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "timezone": "Europe/Bucharest"
+  },
+  "versionId": "47ec8b64-6ff2-4336-8778-a651a8cb18bf",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "a6884e6b2ddf8adc0c16b0503b06e4faaaa9137e91ba6022d296144979d7874a"
+  },
+  "nodeGroups": [],
+  "id": "qWrMu8LtGzflGEEJ",
+  "tags": []
+}
