@@ -2,34 +2,17 @@
 
 Sistem de 3 workflow-uri n8n care creează automat, pornind de la un formular, o echipă completă de proiect pe Microsoft Teams: echipa în sine, toate canalele obligatorii, mesajele inițiale de organizare, membrii din roster-ul standard și tagurile Teams pe funcție.
 
-| # | Workflow | ID | Rol |
-|---|---|---|---|
-| 1 | **Inițializare Echipă** | `rIoTsRZC49oLjUGU` | Workflow principal — primește formularul, creează echipa, orchestrează celelalte 2 |
-| 2 | **Inițializare Echipă - Canale** | `JKSmbresZOAsMqJH` | Creează canalele fixe + suplimentare și postează mesajele inițiale |
-| 3 | **Inițializare Echipă - Utilizatori** | `hSM4BGmzwfmMsKYI` | Adaugă responsabilul ca owner, membrii din roster și tagurile pe funcție |
-
-Cele 3 sunt gândite să ruleze împreună: 2 și 3 nu au trigger propriu (sunt de tip *Execute Workflow Trigger*), nu pot fi pornite decât apelate din workflow-ul 1 (sau manual, pentru test).
-
-## Cum se declanșează
-
-Workflow-ul 1 are un nod **Webhook** (`Webhook Formular Echipă`, POST) pe path-ul `initializare-echipa-teams`:
-
-- Production URL: `https://n8n.econfaire.build/webhook/initializare-echipa-teams`
-- Test URL: `https://n8n.econfaire.build/webhook-test/initializare-echipa-teams`
-
-Un formular HTML (pagină statică, independentă de n8n) trimite un POST către acest URL cu următoarele câmpuri:
-
-| Câmp | Obligatoriu | Descriere |
+| # | Workflow | Rol |
 |---|---|---|
-| `cod_proiect` | da | Cod numeric de proiect, folosit și la începutul numelui echipei |
-| `nume_proiect` | da | Devine descrierea echipei Teams |
-| `amplasament` | da | Intră în numele echipei |
-| `firma` | da | Intră în numele echipei |
-| `design_and_build` | nu (implicit „Nu") | „Da" adaugă sufixul `_D&B` în numele echipei |
-| `responsabil_email` | da | Emailul persoanei care devine owner al echipei |
-| `canale_suplimentare` | nu (implicit gol) | Nume de canale opționale, separate prin virgulă |
+| 1 | **Inițializare Echipă** | Workflow principal — primește formularul, creează echipa, orchestrează celelalte 2 |
+| 2 | **Inițializare Echipă - Canale** | Creează canalele fixe + suplimentare și postează mesajele inițiale |
+| 3 | **Inițializare Echipă - Utilizatori** | Adaugă responsabilul ca owner, membrii din roster și tagurile pe funcție |
 
-**Notă despre conflictul de activare:** dacă la activare n8n spune că path-ul `initializare-echipa-teams` e deja folosit de alt workflow activ, înseamnă că mai există o copie a acestui workflow (importată separat, cu alt ID) activă pe aceeași instanță n8n. Nu poți avea două workflow-uri active cu același path de webhook — trebuie fie dezactivată copia veche, fie schimbat path-ul într-unul dintre ele.
+Cele 3 sunt gândite să ruleze împreună: 2 și 3 nu au trigger propriu (sunt de tip *Execute Workflow Trigger*).
+
+## Workflow-ul 1
+
+![Initializare](images/Initializare.png)
 
 ## Fluxul complet, pas cu pas (detaliat, nod cu nod)
 
