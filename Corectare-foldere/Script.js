@@ -1,22 +1,4 @@
-// ============================================================================
-// Corectare Folder pentru Teams — Web API (Webhook)
-// Logica IDENTICA celor doua noduri Code din workflow-ul original
-// ("Citeste Structura Arhivei & Genereaza Sugestii" + "Construieste Arhiva Corectata"),
-// unite intr-un singur pas ca sa poata fi apelate printr-un singur request webhook.
-// Nu se schimba nicio regula de corectare fata de workflow-ul original cu Form.
-// ============================================================================
-
 try {
-
-// ============================================================================
-// NOD 1 - "Citeste Structura Arhivei & Genereaza Sugestii"
-// Mod: Run Once for All Items | Limbaj: JavaScript
-// ----------------------------------------------------------------------------
-// Verifica numele din arhiva .zip fata de regulile Teams/SharePoint + Windows,
-// construieste PLANUL de corectare (redenumiri + eliminari) si raportul care
-// se arata utilizatorului pentru aprobare. Nu modifica nimic aici.
-// ============================================================================
-
 // ---------------------------------------------------------------- CONSTANTE
 var MAX_NAME = 100;        // nume mai lungi se scurteaza la exact atat
 var MAX_NAME_HARD = 255;   // limita reala Windows / SharePoint pentru un nume
