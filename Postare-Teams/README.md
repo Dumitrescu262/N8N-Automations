@@ -1,5 +1,7 @@
 # Postare Teams din template — README
 
+## Utilizare
+
 Formularul din pagina HTML are 3 pași, fiecare corespunzând unui webhook din workflow:
 
 1. **Cod echipă** — utilizatorul introduce codul de proiect (7 cifre). Workflow-ul caută echipa Teams al cărei nume începe cu acel cod și returnează lista canalelor ei.
