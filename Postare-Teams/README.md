@@ -1,9 +1,5 @@
 # Postare Teams din template — README
 
-Workflow n8n (`Postare Teams din template`) care stă în spatele unei pagini web (`Postare Teams din template (pagina HTML).html`) prin care orice coleg poate posta rapid pe un canal Teams un mesaj standardizat, ales dintr-un catalog de 29 de template-uri (ședințe, predări, vizite, informări etc.). Pentru ședințele cu dată fixă, se creează automat și un eveniment de calendar Outlook cu ședință online Teams.
-
-## Cum funcționează
-
 Formularul din pagina HTML are 3 pași, fiecare corespunzând unui webhook din workflow:
 
 1. **Cod echipă** — utilizatorul introduce codul de proiect (7 cifre). Workflow-ul caută echipa Teams al cărei nume începe cu acel cod și returnează lista canalelor ei.
@@ -18,7 +14,17 @@ Formularul din pagina HTML are 3 pași, fiecare corespunzând unui webhook din w
 | `POST /postare-teams/genereaza-mesaj` | Determină tipul de postare, compune textul din template, creează evenimentul de calendar (dacă e cazul) |
 | `POST /postare-teams/trimite` | Postează mesajul final în canal |
 
-Production: `https://n8n.econfaire.build/webhook/postare-teams/...`
+## Faza 1
+
+![Faza1](images/Faza1.png)
+
+## Faza 2
+
+![Faza2](images/Faza2.png)
+
+## Faza 3
+
+![Faza3](images/Faza3.png)
 
 ## Detalii pe fază
 
@@ -26,7 +32,7 @@ Production: `https://n8n.econfaire.build/webhook/postare-teams/...`
 
 **Generare mesaj** — pe baza tipului de postare ales, textul e compus dintr-un catalog hardcodat de 29 de template-uri (vezi tabelul de mai jos), cu substituții simple (proiect, dată, oră, sală, obiecte, link, detalii). Dacă tipul e o ședință cu dată fixă (stabilire dată, extinsă, discuții execuție, CTS beneficiar, coordonare, coordonare cantități), workflow-ul ia și membrii canalului țintă și creează un eveniment `POST /me/events` (ședință online Teams, cu toți membrii canalului ca participanți) — invitația de calendar ajunge pe email, cu buton de Join generat automat de Outlook.
 
-**Trimitere** — textul (eventual editat) e postat ca mesaj nou în canal, cu mențiune către numele canalului, prin `POST /teams/{teamId}/channels/{channelId}/messages`.
+**Trimitere** — textul (eventual editat) e postat ca mesaj nou în canal.
 
 ## Catalogul de tipuri de postare (29)
 
@@ -61,21 +67,3 @@ Production: `https://n8n.econfaire.build/webhook/postare-teams/...`
 | F. Realizare nota justificativa | Mesaj liber, realizare notă justificativă |
 | F. Predare DALI (1 exemplar) | Termenul de predare DALI |
 | F. Lectii invatate | Completarea formularului de Lecții Învățate |
-
-## Cerințe Microsoft Graph
-
-- Credențial Teams: `Team.ReadBasic.All`, `Channel.ReadBasic.All`, `ChannelMember.Read.All`, `ChannelMessage.Send`.
-- Credențial Outlook: `Calendars.ReadWrite` (doar pentru ședințele cu dată fixă).
-
-## Limitări cunoscute
-
-- Potrivirea echipei se face doar pe primele 7 caractere din nume — două echipe cu același prefix produc eroare.
-- Catalogul de template-uri e dublat (lista de tipuri în HTML, textul complet în workflow) — un tip adăugat doar într-o parte generează mesaj gol/generic în loc de eroare.
-- Participanții la evenimentul de calendar sunt toți membrii canalului cu email vizibil, fără selecție manuală.
-- Evenimentul de calendar apare în calendarul contului Outlook conectat, nu al celui care completează formularul.
-- Fără reîncercare automată pe eroare (Graph throttling etc.) — eroarea e afișată direct în pagină.
-
-## Fișiere asociate
-
-- `Postare Teams din template(2).json` — exportul workflow-ului n8n.
-- `Postare Teams din template (pagina HTML).html` — formularul web în 3 pași.
