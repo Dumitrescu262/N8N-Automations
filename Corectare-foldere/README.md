@@ -1,6 +1,6 @@
 # Corectare Folder pentru Teams
 
-Instrument intern ECONFAIRE ID care verifică o arhivă `.zip` a unui folder și corectează automat problemele de denumire care ar bloca sau ar strica ulterior migrarea / sincronizarea folderului în **Microsoft Teams, SharePoint sau OneDrive** — fără să șteargă niciodată vreun fișier.
+Instrument care verifică o arhivă `.zip` a unui folder și corectează automat problemele de denumire care ar bloca sau ar strica ulterior migrarea / sincronizarea folderului în **Microsoft Teams, SharePoint sau OneDrive** — fără să șteargă niciodată vreun fișier.
 
 Rulează pe **n8n** (workflow + Code node în JavaScript) și are un **client HTML de sine stătător** care poate fi găzduit oriunde (SharePoint, intranet, orice server static) și apelează workflow-ul printr-un webhook.
 
