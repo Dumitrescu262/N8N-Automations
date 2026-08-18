@@ -1,0 +1,438 @@
+{
+  "name": "Postare Mesaje Coordonare si Teme",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "postare-mesaje-echipa",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "7caa8d2e-5c54-416a-8ea0-317e8f2f4f60",
+      "name": "Primește Codul (Webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1792,
+        256
+      ],
+      "webhookId": "e5866137-d149-4975-9357-299385c322b1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "codEchipa",
+              "type": "string",
+              "value": "={{ $json.body.codEchipa.toString().trim() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "48d010a3-5f08-430e-9776-a7a1a6514456",
+      "name": "Pregătește Codul",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1568,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://graph.microsoft.com/v1.0/me/joinedTeams",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "00f3112b-856f-4d6a-8abc-792a92eee150",
+      "name": "Obține Echipele Mele",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -1344,
+        256
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const code=String($('Pregătește Codul').first().json.codEchipa||'').trim();if(!/^\\d{7}$/.test(code))return[{json:{found:false,codEchipa:code,error:'Codul echipei trebuie să aibă exact 7 cifre.'}}];const resp=$input.first().json;const teams=resp.value||[];const match=teams.find(t=>String(t.displayName||'').trim().toLowerCase().startsWith(code.toLowerCase()));if(!match)return[{json:{found:false,codEchipa:code,error:`Nu am găsit nicio echipă al cărei nume să înceapă cu codul \"${code}\".`}}];return[{json:{found:true,codEchipa:code,teamId:match.id,teamName:match.displayName}}];"
+      },
+      "id": "8a03f3e6-f2f9-4f76-95e6-679d1ed0d0a9",
+      "name": "Găsește Echipa după Cod",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f",
+              "leftValue": "={{ $json.found }}",
+              "operator": {
+                "operation": "true",
+                "type": "boolean",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "611e65ff-b8f7-455c-8836-9ddbe876196e",
+      "name": "Echipa Găsită?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -896,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, error: $json.error } }}",
+        "options": {}
+      },
+      "id": "0dfb2b1d-0f2a-4994-b6e4-ca92b3cab255",
+      "name": "Răspunde cu Eroare",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -672,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.microsoft.com/v1.0/teams/{{ $json.teamId }}/channels",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "acff4141-f296-47d8-ac01-50cc12cb0e68",
+      "name": "Obține Canalele Echipei",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -672,
+        96
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const team=$('Găsește Echipa după Cod').first().json;\nconst channels=($input.first().json.value)||[];\nfunction normalizeName(s){return String(s||'').trim().toLowerCase().replace(/[‐-―−]/g,'-').replace(/\\s+/g,' ');}\nfunction findChannel(name){const n=normalizeName(name);return channels.find(c=>normalizeName(c.displayName)===n);}\n\nconst tagDefs=['1.Birou Arhitectura','2.Birou Structuri','3.Birou Instalatii','9.1 Drumuri'];\nconst tagChannels=tagDefs.map(findChannel);\nconst missingTags=tagDefs.filter((n,i)=>!tagChannels[i]);\n\nlet mentionId=0;const tagMentions=[];const tagAtParts=[];\ntagChannels.forEach(ch=>{if(!ch)return;const id=mentionId++;\n  tagMentions.push({id,mentionText:ch.displayName,mentioned:{conversation:{id:ch.id,displayName:ch.displayName,conversationIdentityType:'channel'}}});\n  tagAtParts.push(`<at id=\"${id}\">${ch.displayName}</at>`);});\nconst tagAtHtml=tagAtParts.join(' ');\n\nconst posts=[\n {title:'Coordonare Arhitectura- Rezistenta-Instalatii-Drumuri faza DTAC 1',channelName:'9.2 Verificari Proiect – DTAC 1',closing:'se vor puncta toate subiectele ce tin de coordonare Rezistenta-Arhitectura-Instalatii-Drumuri la faza DTAC 1.'},\n {title:'Coordonare Arhitectura-Rezistenta-Instalatii-Drumuri faza DTAC 2',channelName:'9.3 Verificari Proiect – DTAC 2',closing:'se vor puncta toate subiectele ce tin de coordonare Rezistenta-Arhitectura-Instalatii-Drumuri la faza DTAC 2.'},\n {title:'Coordonare Arhitectura-Rezistenta-Instalatii-Drumuri faza DTAC 3',channelName:'9.4 Verificari Proiect – DTAC 3',closing:'se vor puncta toate subiectele ce tin de coordonare Rezistenta-Arhitectura-Instalatii-Drumuri la faza DTAC 3.'},\n {title:'Teme catre Structuri',channelName:'2.Birou Structuri',closing:'se vor transmite toate temele catre Structuri.'},\n {title:'Teme catre Arhitectura',channelName:'1.Birou Arhitectura',closing:'se vor transmite toate temele catre Arhitectura.'},\n {title:'Teme catre Instalatii',channelName:'3.Birou Instalatii',closing:'se vor transmite toate temele catre Instalatii.'},\n {title:'Teme catre Drumuri',channelName:'9.1 Drumuri',closing:'se vor transmite toate temele catre Drumuri.'},\n {title:'Coordonare Arhitectura- Rezistenta-Instalatii-Drumuri faza PT.DE 1',channelName:'9.6 Verificari Proiect – PT.DE 1',closing:'se vor puncta toate subiectele ce tin de coordonare Rezistenta-Arhitectura-Instalatii-Drumuri la faza PT.DE 1.'},\n {title:'Coordonare Arhitectura-Rezistenta-Instalatii-Drumuri faza PT.DE 2',channelName:'9.7 Verificari Proiect – PT.DE 2',closing:'se vor puncta toate subiectele ce tin de coordonare Rezistenta-Arhitectura-Instalatii-Drumuri la faza PT.DE 2.'},\n {title:'Coordonare Arhitectura-Rezistenta-Instalatii-Drumuri faza PT.DE 3',channelName:'9.8 Verificari Proiect – PT.DE 3',closing:'se vor puncta toate subiectele ce tin de coordonare Rezistenta-Arhitectura-Instalatii-Drumuri la faza PT.DE 3.'}\n];\n\nconst out=[];\nif(missingTags.length){out.push({json:{isNote:true,teamId:team.teamId,teamName:team.teamName,note:`Nu am găsit canalele de menționat: ${missingTags.join(', ')} - mesajele au fost trimise fără aceste taguri.`}});}\n\nfor(const p of posts){\n  const ch=findChannel(p.channelName);\n  if(!ch){out.push({json:{isNote:true,teamId:team.teamId,teamName:team.teamName,note:`Canalul \"${p.channelName}\" nu a fost găsit - mesajul \"${p.title}\" NU a fost trimis.`}});continue;}\n  const bodyHtml=`<strong>${p.title}</strong><br><br>Buna ${tagAtHtml}, in aceasta conversatie, cu Reply, ${p.closing}`;\n  out.push({json:{isNote:false,teamId:team.teamId,teamName:team.teamName,targetChannelId:ch.id,targetChannelName:ch.displayName,bodyHtml,mentions:tagMentions}});\n}\nreturn out;"
+      },
+      "id": "a95b0bec-222d-4b38-95db-2b87ef291435",
+      "name": "Pregătește Mesajele",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "n",
+              "leftValue": "={{ $json.isNote }}",
+              "operator": {
+                "operation": "false",
+                "type": "boolean",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "21df6633-9bec-4a94-b239-f94f0c6053ad",
+      "name": "Poate Trimite?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.microsoft.com/v1.0/teams/{{ $json.teamId }}/channels/{{ $json.targetChannelId }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ body: { contentType: 'html', content: $json.bodyHtml }, mentions: $json.mentions }) }}",
+        "options": {}
+      },
+      "id": "c3493f80-8723-4556-9882-1318405c603f",
+      "name": "Trimite Mesajul în Canal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const orig=$('Poate Trimite?').item.json;return{json:{isNote:false,sent:true,teamId:orig.teamId,teamName:orig.teamName,targetChannelName:orig.targetChannelName}};"
+      },
+      "id": "b9ca21be-6d47-4be4-8a5b-4cf902a5e957",
+      "name": "Confirmă Trimiterea",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "302653e4-9d31-4517-8109-38ec26087b29",
+      "name": "Adună Rezultatele",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        448,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items=$input.all().map(i=>i.json);const teamName=(items.find(i=>i.teamName)||{}).teamName||'';const sentItems=items.filter(i=>i.sent);const uniqueChannels=[...new Set(sentItems.map(i=>i.targetChannelName))];const notes=items.filter(i=>i.isNote&&i.note).map(i=>i.note);let summary=`Echipa: ${teamName}\\n\\n`;summary+=sentItems.length?`${sentItems.length} mesaje trimise cu succes, in canalele: ${uniqueChannels.join(', ')}.\\n\\n`:'Niciun mesaj nu a fost trimis.\\n\\n';if(notes.length)summary+=`Observatii:\\n- ${notes.join('\\n- ')}`;return[{json:{summary}}];"
+      },
+      "id": "b45bfb86-a236-4a80-ad5b-63b7696f84fa",
+      "name": "Rezumat Rezultate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, summary: $json.summary } }}",
+        "options": {}
+      },
+      "id": "2080dfce-ab00-4277-981c-321afaa83f6e",
+      "name": "Răspunde cu Rezultatul",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        96
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Primește Codul (Webhook)": {
+      "main": [
+        [
+          {
+            "node": "Pregătește Codul",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregătește Codul": {
+      "main": [
+        [
+          {
+            "node": "Obține Echipele Mele",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obține Echipele Mele": {
+      "main": [
+        [
+          {
+            "node": "Găsește Echipa după Cod",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Găsește Echipa după Cod": {
+      "main": [
+        [
+          {
+            "node": "Echipa Găsită?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Echipa Găsită?": {
+      "main": [
+        [
+          {
+            "node": "Obține Canalele Echipei",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Răspunde cu Eroare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obține Canalele Echipei": {
+      "main": [
+        [
+          {
+            "node": "Pregătește Mesajele",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregătește Mesajele": {
+      "main": [
+        [
+          {
+            "node": "Poate Trimite?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poate Trimite?": {
+      "main": [
+        [
+          {
+            "node": "Trimite Mesajul în Canal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Adună Rezultatele",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Trimite Mesajul în Canal": {
+      "main": [
+        [
+          {
+            "node": "Confirmă Trimiterea",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmă Trimiterea": {
+      "main": [
+        [
+          {
+            "node": "Adună Rezultatele",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adună Rezultatele": {
+      "main": [
+        [
+          {
+            "node": "Rezumat Rezultate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rezumat Rezultate": {
+      "main": [
+        [
+          {
+            "node": "Răspunde cu Rezultatul",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "0579b222-55d7-4fd6-a194-4b19f1c79790",
+  "meta": {
+    "instanceId": "a6884e6b2ddf8adc0c16b0503b06e4faaaa9137e91ba6022d296144979d7874a"
+  },
+  "nodeGroups": [],
+  "id": "zC7sBn5RVwPM6STi",
+  "tags": []
+}

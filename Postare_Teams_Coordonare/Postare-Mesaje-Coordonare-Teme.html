@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Postare Mesaje Coordonare / Teme</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --border: #e1e4e9;
+    --text: #1c2128;
+    --muted: #6b7280;
+    --accent: #0f4c81;
+    --accent-hover: #0c3d68;
+    --ok-bg: #ecfdf3;
+    --ok-text: #05603a;
+    --err-bg: #fef2f2;
+    --err-text: #991b1b;
+    --warn-bg: #fffbeb;
+    --warn-text: #92400e;
+    --warn-border: #fde68a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    padding: 32px 36px;
+    max-width: 560px;
+    width: 100%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  h1 {
+    font-size: 22px;
+    margin: 0 0 4px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0 0 28px;
+    line-height: 1.5;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    margin-top: 18px;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 0;
+    font-size: 14px;
+    background: #fff;
+    color: var(--text);
+  }
+  input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(15,76,129,0.12);
+  }
+  .hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  button {
+    margin-top: 28px;
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 0;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  button:hover { background: var(--accent-hover); }
+  button:disabled {
+    background: #a9b6c2;
+    cursor: not-allowed;
+  }
+  .result {
+    display: none;
+    text-align: center;
+    padding: 24px 4px 8px;
+  }
+  .result.show { display: block; }
+  .result-state { display: none; }
+  .result-state.show { display: block; }
+  .spinner {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 18px;
+    border: 4px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .waiting-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .result-detail {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    text-align: left;
+  }
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px;
+    border-radius: 0;
+    background: var(--ok-text);
+    color: #fff;
+    font-size: 36px;
+    line-height: 64px;
+    text-align: center;
+  }
+  .success-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--ok-text);
+  }
+  .secondary-btn {
+    margin-top: 24px;
+    background: #fff;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .secondary-btn:hover { background: #f0f4f8; }
+  .status {
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border-radius: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    display: none;
+  }
+  .status.error { background: var(--err-bg); color: var(--err-text); display: block; }
+  .status.success { background: var(--ok-bg); color: var(--ok-text); display: block; }
+
+  .obs-box {
+    margin-top: 18px;
+    padding: 12px 14px;
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    text-align: left;
+  }
+  .obs-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--warn-text);
+    margin-bottom: 6px;
+  }
+  .obs-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13px;
+    color: var(--warn-text);
+    line-height: 1.5;
+  }
+  .obs-list li { margin-bottom: 4px; }
+  .obs-list li:last-child { margin-bottom: 0; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Postare Mesaje Coordonare / Teme</h1>
+    <p class="subtitle">Introdu codul echipei (proiectului). Se caută echipa după cod și se postează mesajele de coordonare și teme în canalele corespunzătoare, inclusiv copii către Arhitectura, Structuri, Instalatii și Drumuri.</p>
+
+    <div id="globalBanner" class="status"></div>
+
+    <form id="codForm" novalidate>
+    <div id="formFields">
+      <label for="codEchipa">Cod echipă *</label>
+      <input type="text" id="codEchipa" name="codEchipa" placeholder="ex: 0080825" maxlength="7" inputmode="numeric">
+      <div class="hint">7 cifre. Folosit pentru a găsi echipa Teams al cărei nume începe cu acest cod.</div>
+
+      <button type="submit" id="submitBtn">Trimite</button>
+    </div>
+    </form>
+
+    <div class="result" id="resultView">
+      <div class="result-state show" id="waitingState">
+        <div class="spinner"></div>
+        <div class="waiting-title">Se postează mesajele…</div>
+        <div class="result-detail">Se caută echipa, se identifică canalele și se postează mesajele de coordonare și teme. Poate dura câteva zeci de secunde — nu închide și nu reîncărca pagina.</div>
+      </div>
+      <div class="result-state" id="successState">
+        <div class="success-icon">&#10003;</div>
+        <div class="success-title">Finalizat cu succes!</div>
+        <div class="obs-box hidden" id="successObs">
+          <div class="obs-title">Observații</div>
+          <ul class="obs-list" id="successObsList"></ul>
+        </div>
+        <button type="button" class="secondary-btn" id="retryOkBtn">Postează pentru altă echipă</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const WEBHOOK_URL = "https://n8n.econfaire.build/webhook/postare-mesaje-echipa";
+  const form = document.getElementById("codForm");
+  const submitBtn = document.getElementById("submitBtn");
+
+  const formFields = document.getElementById("formFields");
+  const resultView = document.getElementById("resultView");
+  const waitingState = document.getElementById("waitingState");
+  const successState = document.getElementById("successState");
+  const retryOkBtn = document.getElementById("retryOkBtn");
+  const globalBanner = document.getElementById("globalBanner");
+  const successObs = document.getElementById("successObs");
+  const successObsList = document.getElementById("successObsList");
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function extractObservations(summary) {
+    if (!summary) return [];
+    const marker = "Observatii:";
+    const idx = summary.indexOf(marker);
+    if (idx === -1) return [];
+    const rest = summary.slice(idx + marker.length).trim();
+    return rest
+      .split("\n")
+      .map(function (line) { return line.replace(/^-\s*/, "").trim(); })
+      .filter(Boolean);
+  }
+
+  function banner(type, msg) {
+    globalBanner.className = "status " + type;
+    globalBanner.textContent = msg;
+  }
+  function clearBanner() {
+    globalBanner.className = "status";
+    globalBanner.textContent = "";
+  }
+
+  function showResultState(state) {
+    [waitingState, successState].forEach(function (el) {
+      el.classList.toggle("show", el === state);
+    });
+  }
+
+  function showForm() {
+    resultView.classList.remove("show");
+    formFields.style.display = "";
+  }
+
+  function showWaiting() {
+    formFields.style.display = "none";
+    resultView.classList.add("show");
+    showResultState(waitingState);
+  }
+
+  function showSuccess(summary) {
+    clearBanner();
+    const observations = extractObservations(summary);
+    if (observations.length) {
+      successObsList.innerHTML = observations.map(function (o) {
+        return "<li>" + escapeHtml(o) + "</li>";
+      }).join("");
+      successObs.classList.remove("hidden");
+    } else {
+      successObsList.innerHTML = "";
+      successObs.classList.add("hidden");
+    }
+    showResultState(successState);
+  }
+
+  retryOkBtn.addEventListener("click", function () {
+    form.reset();
+    showForm();
+  });
+
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    clearBanner();
+
+    const cod = form.codEchipa.value.trim();
+    if (!/^\d{7}$/.test(cod)) {
+      banner("error", "Codul echipei trebuie să aibă exact 7 cifre.");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    showWaiting();
+
+    const payload = { codEchipa: cod };
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      let data = null;
+      try { data = await res.json(); } catch (_) {}
+
+      if (res.ok && data && data.ok) {
+        showSuccess(data.summary);
+      } else {
+        showForm();
+        banner("error", (data && data.error) || ("Serverul a răspuns cu eroare (" + res.status + "). Verifică workflow-ul în n8n."));
+      }
+    } catch (err) {
+      showForm();
+      banner("error", "Nu s-a putut trimite cererea (" + err.message + "). Verifică conexiunea sau setările CORS ale webhook-ului în n8n.");
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
