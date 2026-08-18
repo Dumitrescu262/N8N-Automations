@@ -1,4 +1,4 @@
-# Postare Teams din template — README
+# Postare Teams din template
 
 ## Utilizare
 

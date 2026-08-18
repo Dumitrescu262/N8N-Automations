@@ -72,3 +72,15 @@ Webhook Trimite → Pregateste Graph (construiește mesajul HTML final + mențiu
 ## Imagine Faza 3 - modificare text + selectare canale/persoane si trimitere:
 
 ![Imagine](images/Imagine.png)
+
+## Funcționalitate generală
+
+Aplicația simplifică procesul de creare și publicare a comunicărilor de proiect în Microsoft Teams, pornind de la un formular unic și folosind template-uri predefinite pentru fiecare tip de postare.
+
+Utilizatorul nu trebuie să caute manual echipa sau canalul și nici să redacteze de la zero mesajele repetitive. Pe baza codului de proiect, aplicația identifică automat echipa și pune la dispoziție canalele disponibile, după care generează un draft adaptat tipului de comunicare și informațiilor introduse. 
+
+Draftul poate fi verificat și modificat înainte de publicare. La trimitere, mesajul este transmis direct în canalul Teams selectat prin Microsoft Graph API. 
+
+Pentru tipurile de postări asociate unor ședințe cu dată și oră stabilite, aplicația automatizează și partea de calendar: identifică membrii canalului și creează un eveniment Teams/Outlook cu participanții și agenda corespunzătoare.
+
+În acest mod, fluxul de lucru este redus la trei acțiuni principale: alegerea proiectului și a canalului → completarea informațiilor și revizuirea draftului → publicarea mesajului, cu automatizarea suplimentară a programării ședințelor acolo unde este necesar.
