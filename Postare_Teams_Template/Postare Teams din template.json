@@ -1,0 +1,684 @@
+{
+  "name": "Postare Teams din template",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.value.length }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "18dd88a7-2e3d-4c6e-b103-cb09bce89560",
+      "name": "Echipa Gasita?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1872,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $json.value[0].id + '/channels' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "124388dd-4639-4123-ad11-615d8c72906e",
+      "name": "Obtine Canale Echipa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1648,
+        80
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $('Filtreaza Echipa Dupa Cod').item.json.value[0].id + '/members' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "63287b44-0f37-40b0-9486-f12ed131e99e",
+      "name": "Obtine Membri Echipa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1472,
+        80
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $json.body || {};\nconst t = b.tip_postare || '';\nlet profil = 'info';\nif (t === 'D. Sedinta - propunere data (poll disponibilitate)') profil = 'sedinta_poll';\nelse if (['D. Sedinta - stabilire data','D. Sedinta extinsa','D. Discutii cu executia (solutii tehnice)','D. Sedinta CTS beneficiar','D. Sedinta de coordonare','D. Sedinta coordonare cantitati'].indexOf(t) >= 0) profil = 'sedinta_data';\nelse if (t === 'B. Vizita amplasament') profil = 'vizita';\nelse if (t.charAt(0) === 'F') profil = 'predare';\nreturn [{ json: Object.assign({}, b, { profil: profil }) }];"
+      },
+      "id": "91a28002-3d56-486d-8e80-80edd8b7d6ab",
+      "name": "Determina profil",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -624,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const f = $json;\nconst nl = '\\n';\nconst P = f.nume_proiect || '[proiect]';\nlet D = f.data || '[data]';\nif (/^\\d{4}-\\d{2}-\\d{2}$/.test(D)) { const dp = D.split('-'); D = dp[2] + '.' + dp[1] + '.' + dp[0]; }\nconst O = f.ora || '[ora]';\nconst S = f.sala ? (', in ' + f.sala) : '';\nconst OB = f.obiecte || '[obiecte]';\nconst L = f.link_sau_cale || '';\nconst DET = f.detalii || '';\nconst t = f.tip_postare || '';\nconst T = {};\nT['A. Documentatie proiect pe Teams'] = 'Buna General,'+nl+nl+'In Teams in Files in 1.Tema proiectare.Caiet de sarcini si pe server am incarcat:'+nl+'- documentatia SF, Caietul de sarcini'+nl+'- documentatie de lucru de la Licitatie pentru toate specialitatile'+nl+'- un document word in care am centralizat toate subiectele si ipotezele pe care s-a mers la licitatie, discutate in canalul de licitatie'+(L?(nl+nl+'Cale: '+L):'')+nl+nl+'Va rog sa intocmiti o lista cu persoanele ce vor lucra pe acest proiect (cu adresa de mail) pentru a le adauga in Teams.'+nl+nl+'Multumesc. O zi buna!';\nT['A. Lansare de proiect'] = 'Buna General,'+nl+nl+'Propun sa avem sedinta de lansare proiect pe '+D+' la ora '+O+S+'. In acest sens este in proces de completare Fisa de lansare proiect.'+nl+nl+'General, va reamintesc activitatile pe care trebuie sa le facem inainte de sedinta extinsa:'+nl+'- responsabilul/managerul de proiect analizeaza tema de proiectare si completeaza toate obiectele din proiect cu informatii aferente fiecaruia, conform template (primul sheet din Excel lansare de proiect)'+nl+'- responsabilul/managerul de proiect completeaza in C02 personalul cheie declarat la licitatie'+nl+'- coordonatorii analizeaza succint tema de proiectare si completeaza pentru fiecare obiect, daca e cazul, cu informatii noi/suplimentare in fisa de lansare'+nl+'- coordonatorii propun echipa de proiect pe fiecare specialitate si completeaza numele acestora in C02 - la lucreaza efectiv, iar in cazul subcontractarii, completeaza cu responsabilii interni care vor tine legatura pe proiect'+nl+'- responsabilul/managerul de proiect + coordonatorii completeaza cu eventuale intrebari generale in fisierul excel C03'+nl+nl+'Agenda sedintei de lansare:'+nl+'- participa coordonatorii, managerul de proiect si/sau arhitectul desemnat pe proiect'+nl+'- managerul de proiect prezinta pe scurt toate obiectele cu specialitatile aferente implicate, studiile necesare, iar coordonatorii vin cu completari sau intrebari'+nl+'- se stabileste echipa de proiect, inclusiv subcontractantii, tinand cont de personalul cheie declarat in cadrul licitatiei'+nl+'- se stabilesc eventuale intrebari pentru beneficiar (de exemplu necesar CU etc.)'+nl+'- se stabileste data sedintei extinse si documentele/activitatile pe care trebuie sa le desfasoare echipa de proiect pana atunci'+nl+nl+'Daca nu este Ok ca data sau ora, pentru toata lumea, va rog sa anuntati cu Reply la aceasta postare.'+nl+nl+'Multumesc frumos!';\nT['A. Management flux informational'] = 'Buna General, propun urmatorul flux de lucru privind managementul informatiei pe Teams:'+nl+'- Documentele (dwg, pdf, word, excel) necesar a fi incarcate pe Teams se vor incarca in folderele dedicate din canalele de proiect: General, 1.Birou Arhitectura, 2.Birou Structuri, 3.Birou Instalatii, 9.1 Drumuri.'+nl+'- Nu se vor lasa documente la liber, neincadrate in foldere cu nume clare.'+nl+'- S-a facut o prima propunere de structura de foldere in aceste canale. Va rog sa analizati functie de specificul fiecarei specialitati si sa veniti cu propuneri. Ulterior vom face o procedura clara de continut informatii per folder.'+nl+'- Nu se vor incarca fisiere in folderele de proiect deoarece in aceste canale nu avem structura clara de foldere si este greu sa tinem tracking in prea multe locatii.'+nl+'- Pozele se pot lasa la liber, insa recomandarea mea este sa le copiati in foldere dedicate dupa ce s-a realizat postarea. Nu afecteaza postarea daca se da move la poze din files.'+nl+'- Discutiile intre specialitati se vor realiza in canalele de obiecte cu Reply la postarile deja realizate in fiecare canal. Chiar si daca vom tine tabele in Loop, componenta Loop se va atasa cu reply la postarea de interes.'+nl+'- Temele catre celelalte specialitati se vor incarca (dwg, pdf, word, excel etc.) in Canalul Specialitatii catre care se transmite tema, in folderele dedicate. Postarea cu transmiterea temei se va face in canalul obiectului la care face referire tema, cu Reply la postarile deja realizate, si se va atasa link catre tema.'+nl+'- Atunci cand o solutie tehnica/problema/neclaritate se aplica evident pe mai multe obiecte, se vor mentiona in postarile de coordonare toti proiectantii implicati pe proiect (chiar si cei care nu lucreaza pe obiectul in cauza).'+nl+'- Va rog sa aveti grija la trackingul informational cu subcontractantii: pentru documente care nu sunt Revit, folositi Folderul Colaborare Subcontractanti - Primite si Transmise din fiecare canal.'+nl+nl+'Multumesc frumos. Spor!';\nT['A. Date generale, antet, cartus, reguli'] = 'Buna General, in aceasta postare se vor centraliza discutiile pe urmatoarele subiecte: date generale proiect, antet piese scrise, familie cartus si reguli generale si specifice de proiectare.'+nl+nl+'- Excel Date generale proiect (datele generale ce se vor trece in piesele scrise si in familia de cartus): General-Files-Organizare-Date generale proiect.'+nl+'- Antet piese scrise pentru fiecare specialitate: General-Files-Organizare-Antet piese scrise.'+nl+'- Familie de cartus a proiectului: General-Files-Organizare-Familie cartus (si export cartus format dwg).'+nl+'- Reguli generale si specifice de proiectare: document Word, setat ca tab in canalul General - il deschideti in app si folositi Navigation Pane.'+(L?(nl+nl+'Link/cale: '+L):'')+nl+nl+'OBSERVATII:'+nl+'- Parti scrise: se va face un singur document parte scrisa care va contine toate obiectele.'+nl+'- Datele generale din Partile scrise trebuie sa fie identice pentru toata lumea, adica exact cele trecute in Excel Date generale proiect (nu alte cuvinte, nu alta formulare). Daca identificati nevoia de corectare/completare, discutam intai, completam in Excel si abia apoi se preiau in toate partile scrise de catre toate specialitatile.'+nl+'- Atentie: in cartus nu se scrie cu diacritice!'+nl+'- Scara de predare a planurilor pentru faza DTAC si faza PTDE este 1:50 pentru toate specialitatile (nu se refera la planurile de situatie, planurile de Drumuri, planurile de detalii).'+nl+'- Documentul Reguli de proiectare cuprinde, pe fiecare specialitate: reguli specifice de proiectare rezultate din minutele sedintelor, si reguli generale aplicabile pe proiect, extrase din Lectiile Invatate ale fiecarei specialitati (de completat de persoanele desemnate de coordonatorii de departament).'+(DET?(nl+nl+DET):'')+nl+nl+'Multumesc frumos. Spor!';\nT['B. Studii teren (Topo/Geo)'] = 'General, in aceasta postare vom tine centralizat discutiile pe subiectul Studiul Topo si Studiul Geotehnic.'+nl+nl+'Atasat transmit tema pentru Ridicarea Topo pe care va trebui sa o realizam pentru acest proiect.'+(L?(nl+'Tema Topo: '+L):'')+nl+nl+'De asemenea, va rog sa aveti in vedere realizarea Studiului Geo pentru acest amplasament.'+(DET?(nl+DET):'')+nl+nl+'Multumesc frumos!';\nT['B. Certificat de urbanism / Avize'] = 'Buna General, in aceasta postare se vor centraliza discutiile pe subiectele Certificat de Urbanism si Avize obtinute.'+nl+nl+'Acestea se gasesc in Teams (02.Avize obtinute) si pe server.'+(L?(nl+'Cale: '+L):'')+(DET?(nl+nl+DET):'')+nl+nl+'Multumesc. Spor!';\nT['B. Vizita amplasament'] = 'General,'+nl+nl+'Pe '+D+', la ora '+O+', se va face o vizita in amplasament pentru a prelua informatiile necesare procesului de proiectare / pentru predarea-primirea amplasamentului.'+nl+nl+'Va rog sa transmiteti lista cu persoanele care vor veni la aceasta vizita pe santier, pentru asigurarea accesului.'+nl+nl+'Pentru incarcarea pozelor si filmarilor realizate in cadrul vizitei am facut un folder dedicat pe server. Pentru notarea si centralizarea informatiilor din santier am creat o pagina in OneNote - fiecare specialitate va completa acolo observatiile si concluziile rezultate in urma vizitei.'+nl+nl+'Atasez un Checklist de vizita amplasament, impartit in doua subpuncte: Elemente necesare ridicare topo si Elemente necesare etapa de proiectare - va rog sa il parcurgeti si sa completati pe fiecare specialitate.'+(L?(nl+nl+'Cale/link: '+L):'')+nl+nl+'De asemenea, pentru tracking-ul informatiilor primite din amplasament am facut o sectiune dedicata in One Note - dati Reply la aceasta postare de fiecare data cand completati o pagina noua cu informatii din santier.'+nl+nl+'Multumesc frumos. Spor!';\nT['C. Realizare proiect in ACC'] = 'Buna General,'+nl+nl+'A fost creat in ACC proiectul, cu structura de foldere aferenta pentru fiecare specialitate si obiect, si s-a dat acces catre toti membrii echipei conform Fisei de Lansare Proiect.'+nl+nl+'Vom lucra in Revit '+(DET||'[versiune]')+' pentru toate specialitatile. Am rugamintea sa va asigurati ca toate persoanele care lucreaza pe acest proiect au aceasta versiune de Revit.'+nl+nl+'Atasez mai jos instructiunile de interes privind modul de lucru in ACC:'+nl+'- 01.ACC_BCP_Incarcarea fisierului Revit.docx'+nl+'- 02.ACC_BCP_Design Collaboration.docx'+nl+'- 03.ACC_BCP_Model Coordination.docx'+nl+'- Lucru colaborativ digitalizat - ACC (Web view)'+(L?(nl+nl+'Link: '+L):'')+nl+nl+'Multumesc!';\nT['C. Proiectant extern'] = 'Buna, General, pentru lucrarea '+OB+' vom colabora cu un proiectant extern (Eticheta Teams).'+nl+nl+'Am rugamintea ca toate conversatiile si informatiile ce tin de aceasta lucrare (sau orice ar putea influenta acest subiect) sa se realizeze in Teams si sa fie mentionat @eticheta teams.'+nl+nl+'Pentru orice detalii suplimentare sau pentru transmiterea temei, va rog sa-i dati tag proiectantului extern.'+nl+nl+'Multumesc!';\nT['C. Workflow verificari'] = 'Buna General, va rog sa completati astazi, pana la pranz, in fisierul Flux predari si verificari persoanele care se vor ocupa de verificari si implementari la verificarea de corectitudine din ACC, pe fiecare specialitate, pentru a se putea crea workflow-urile.'+nl+nl+'Va rog sa ma anuntati cand este completat tabelul, ca sa adaug rolurile de verificator colegilor.'+(L?(nl+'Fisier: '+L):'')+nl+nl+'Multumesc frumos. Spor!';\nT['D. Sedinta - propunere data (poll disponibilitate)'] = 'Buna General,'+nl+nl+'Pentru proiectul '+P+' trebuie sa stabilim data '+(f.obiecte?('sedintei pe '+OB):'unei sedinte')+'. Va rog sa propuneti, prin Reply la aceasta postare, ziua si intervalul orar in care sunteti disponibili.'+nl+nl+'Pe baza disponibilitatii voi verifica o sala si voi reveni cu confirmarea.'+nl+nl+'Multumesc!';\nT['D. Sedinta - stabilire data'] = 'Buna General,'+nl+nl+'In urma disponibilitatilor, '+(f.obiecte?('sedinta pe '+OB):'sedinta')+' se stabileste pe '+D+' la ora '+O+S+'.'+nl+nl+'Va rog confirmati participarea. Daca ceva nu convine, anuntati cu Reply.'+nl+nl+'Multumesc!';\nT['D. Sedinta extinsa'] = 'Buna General,'+nl+nl+'Saptamana viitoare, pe '+D+', la ora '+O+S+', va avea loc Sedinta Extinsa pentru acest proiect.'+nl+nl+'Activitati ce trebuie realizate inainte de sedinta extinsa:'+nl+'- Studierea amanuntita a temei de proiectare de catre Coordonatori si de catre proiectantii desemnati de catre acestia.'+nl+'- Completarea de catre proiectantii desemnati de coordonatori, pe fiecare specialitate, a documentului Infobook din General-Files-Organizare: in sheet-ul Centralizator se completeaza coloanele Cerinte SF/tema proiectare/caiet de sarcini/nota fundamentare, Cerinte extrase din norme si standarde, Cerinte si solutii propuse de arhitect si Solutii propuse de proiectant specialitati.'+nl+'- Completarea de catre proiectantii desemnati de coordonatori, pe fiecare specialitate, a documentului C.07_RFI din General-Files-Organizare, cu intrebarile/nelamuririle Interne si catre Beneficiar, rezultate in urma studierii documentatiei.'+nl+'- Intocmirea de catre proiectantii desemnati de coordonatori, pe fiecare specialitate, a Checklist-urilor in platforma ERP.'+(L?(nl+nl+'Infobook+RFI: '+L):'')+nl+nl+'Voi mai reveni ulterior cu informatii suplimentare.'+nl+nl+'Multumesc. Spor!';\nT['D. Discutii cu executia (solutii tehnice)'] = 'Buna General,'+nl+nl+'Mai jos punctez subiectele pe care a ramas sa le discutam cu colegii din executie in vederea stabilirii solutiilor tehnice pe proiectul '+P+'.'+nl+nl+'Sedinta cu executia: '+D+', ora '+O+S+'. Este ok pentru toata lumea?'+nl+nl+'Va rog sa puneti cu Reply la aceasta postare toate subiectele care mai sunt de discutat, pe fiecare specialitate, altele decat cele punctate mai jos.'+(DET?(nl+nl+'Subiecte de discutat:'+nl+DET):'')+nl+nl+'De asemenea, in vederea analizarii subiectelor de discutie inainte de sedinta, va rog ca pana luni la pranz sa punem pe fiecare specialitate materialele de lucru pe care le aveti pana acum (schite dwg, export Revit, export Civil, excel, word, pdf etc.), relationate la subiectele de discutie.'+(L?(nl+nl+'Documente subiecte discutii cu executia: '+L):'')+nl+nl+'Multumesc frumos. Spor!';\nT['D. Sedinta CTS beneficiar'] = 'Buna General,'+nl+nl+'Pasul urmator este sa pregatim clar solutiile tehnice pe care le vom prezenta Beneficiarului, cat si intrebarile pe care i le vom adresa.'+nl+nl+'Sedinta CTS va avea loc pe '+D+', la ora '+O+'.'+nl+nl+'In acest sens avem o lista de activitati care trebuie realizate:'+nl+'- Citire si completare minuta sedinta extinsa in OneNote.'+nl+'- Completare Infobook, coloana solutii proiectant, pe fiecare obiect si fiecare specialitate, cu solutiile propuse de noi, discutate si agreate in sedinta extinsa.'+nl+'- Completare RFI pe fiecare obiect si fiecare specialitate, cu intrebarile catre beneficiar si intrebarile interne, formulate clar si usor de inteles. Daca la o intrebare exista deja raspuns si subiectul e clar dar nu e completat in RFI, completati si marcati cu o culoare diferita.'+nl+'- Realizarea activitatilor de analiza si stabilire solutii tehnice, rezultate in urma sedintei extinse si transmise ca task-uri catre fiecare dintre voi.'+nl+'- Completare subiecte discutie cu executia pe solutii tehnice.'+nl+'- Checklist-uri faza DTAC.'+nl+nl+'Vor participa la sedinta CTS Beneficiar toate persoanele nominalizate de catre coordonatorii de proiect. Plecarea se va face cu circa o ora inainte de ora stabilita, cu masini de serviciu. Stabilim detaliile cu o zi inainte de sedinta.'+nl+nl+'De asemenea, in vederea clarificarii solutiilor tehnice si a raspunsurilor la intrebarile cu raspuns intern, va rog sa participati si la o scurta sedinta pregatitoare, cu aceleasi persoane nominalizate de coordonatorii de proiect.'+nl+nl+'Vom tine informatia centralizata cu Reply la aceasta postare. Fisierele se vor pune in canalele fiecarei specialitati si cu link se vor atasa acestei postari.'+nl+nl+'Multumesc frumos. Spor!';\nT['D. Sedinta de coordonare'] = 'Buna General,'+nl+nl+'Pe '+D+', la ora '+O+S+', va avea loc sedinta de coordonare pe '+OB+'.'+nl+nl+'In acest sens, pentru a fi eficienti, va rog sa analizati pentru fiecare obiect si fiecare specialitate:'+nl+'- care este stadiul proiectului,'+nl+'- care sunt, in mare, solutiile tehnice,'+nl+'- care sunt necesitatile pe care le aveti de la alte specialitati (teme),'+nl+'- care sunt intrebarile/nelamuririle care persista si care reprezinta blocante (pe cele deja analizate, marcati-le cu o culoare distincta).'+(DET?(nl+nl+DET):'')+nl+nl+'Ne vom uita pe documentatia incarcata in ACC.'+nl+nl+'Multumesc frumos. Spor!';\nT['D. Sedinta coordonare cantitati'] = 'Buna General, pe '+D+' la ora '+O+S+' va avea loc sedinta de coordonare cantitati pe '+OB+'.'+(DET?(nl+nl+DET):'')+nl+nl+'Multumesc. Spor!';\nT['E. Flux de lucru / verificari / reguli'] = 'Buna General,'+nl+nl+'Transmit mai jos anumite clarificari/pasi ce trebuie indepliniti in procesul de proiectare pentru a asigura buna functionare a procesului:'+nl+'- Pe fiecare specialitate se vor prioritiza activitatile si lucrarile care au impact pe alte specialitati. De asemenea se va prioritiza realizarea documentatiei pentru obtinerea avizelor.'+nl+'- La verificarile de completitudine, verificati si ca temele date catre alte specialitati sunt implementate; in caz contrar, faceti observatii in ERP si postare mesaj in Teams.'+nl+'- Verificarile se fac a doua zi de la predarea unei faze.'+nl+'- Inainte de predarea fiecarei faze, pentru fiecare specialitate se citesc minutele sedintelor si se asigura respectarea si implementarea solutiilor agreate in acestea.'+nl+'- Cand solicitati o tema de la alte specialitati sau raspuns la nelamuriri care reprezinta blocante si nu primiti raspuns, insistati pentru informatii; daca tot nu se raspunde, mentionati-ma direct pe mine pentru deblocarea fluxului.'+nl+'- Pe parcursul proiectului completam Infobook si RFI cu solutiile actualizate si intrebarile catre beneficiar si intern; avand in vedere situatia, completati doar in RFI si dati mesaj in Teams cand ati completat.'+nl+'- Toate specialitatile, cand modeleaza in Revit, trebuie sa aiba deschise link-urile de la toate celelalte specialitati pentru analiza implicatiilor.'+nl+'- Completati in regulile generale, pe fiecare specialitate, lectiile invatate de la proiectele similare; daca nu aveti timp, macar puneti intrebari pe Teams sau catre coordonatorii de departament.'+nl+'- Contactati colegii din executie pentru a stabili detaliile care au multiple solutii posibile, in vederea alegerii solutiei optime.'+nl+'- Dupa predarea unei faze marcata prin Approvals, dati Complete la Task si incepeti task-ul fazei urmatoare; daca faza urmatoare nu poate fi inceputa din lipsa de informatii, porniti task-ul dar puneti eticheta \"Intrerupt\".'+nl+'- Dupa ce s-au finalizat verificarile unei faze de catre toate specialitatile, intrati in ERP in Checklist-Analytics si implementati observatiile colegilor.'+nl+'- Activati alerta de notificare pentru modificari pe documentele incarcate in Teams (Files > click dreapta pe document > Open in SharePoint > cele trei puncte > Alert Me), ca sa nu ratati modificarile pe documentele comune.'+(DET?(nl+nl+DET):'')+nl+nl+'Multumesc. Spor!';\nT['E. Actualizare documentatie in ACC'] = 'Buna General, conform primei minute a sedintei CTS cu Beneficiarul, s-a stabilit ca la fiecare doua saptamani sa asiguram incarcarea actualizata (la stadiul respectiv) a documentatiei in ACC.'+nl+nl+'In acest sens, am rugamintea ca astazi pana la ora '+O+' sa asigurati incarcarea in ACC a documentatiei in format editabil (dwg, Revit, word) pe fiecare obiect si fiecare specialitate, in folderele specifice fiecarei specialitati.'+nl+nl+'Pentru lucru cu Revit in BCP: asigurati-va ca aveti setate la Publish settings planurile si 3D view-urile relevante si ca ati realizat Publicarea documentatiei. Pentru dwg si word, incarcati cu drag and drop documentatia in ACC.'+nl+nl+'Multumesc frumos si spor!';\nT['E. Postare coordonare per obiect (DTAC/PTDE)'] = 'Buna General, deschid aceasta postare de coordonare pentru '+OB+' faza '+(DET||'[DTAC/PTDE + nr]')+'.'+nl+nl+'Aici centralizam conversatiile de coordonare Arhitectura-Rezistenta-Instalatii-Drumuri pentru acest obiect. Folositi Reply la aceasta postare pentru toate discutiile pe subiect.'+(L?(nl+nl+'Link: '+L):'')+nl+nl+'Multumesc. Spor!';\nT['F. Predare DTAC/PSI/DTAD'] = 'Hello General, pe '+D+(f.ora?(' - ora '+O):'')+' trebuie sa avem gata de predare documentatia faza DTAC/PSI/DTAD.'+(L?(nl+nl+'Folder predare: '+L):'')+(DET?(nl+nl+DET):'')+nl+nl+'Confirmati citirea si anuntati orice risc fata de termen. Spor!';\nT['F. Detach faza intermediara DTAC'] = 'Buna General, pentru faza intermediara DTAC trebuie sa realizam detach-urile in ACC pentru acces beneficiar.'+(L?(nl+nl+'Folder ACC: '+L):'')+(DET?(nl+nl+DET):'')+nl+nl+'Dati Reply cand ati pus plansele finale in folder. Multumesc!';\nT['F. Predare documentatie PTDE'] = 'Hello General,'+nl+nl+'pe '+D+(f.ora?(' - ora '+O):'')+' trebuie sa avem gata de predare in format fizic catre beneficiar documentatia PTDE'+(DET?(' ('+DET+')'):'')+'.'+(L?(nl+nl+'Folder de predare: '+L):'')+nl+nl+'In acest scop, cel tarziu pana la termen, trebuie sa avem TOATA DOCUMENTATIA pe TOATE SPECIALITATILE:'+nl+'- printata'+nl+'- indosariata'+nl+'- semnata si stampilata'+nl+'- verificata'+nl+'- opisata'+nl+'- bagata in cutii'+nl+'- cu coperti'+nl+nl+'Va rog sa numiti responsabili cu predarea pe fiecare specialitate, care se vor ocupa de: adaugarea fisierelor in folderul de print si printarea lor, verificarea planselor cf. borderou inainte si dupa print, stampilarea/semnarea/indosarierea lor, printarea copertilor si predarea dosarelor complete.'+nl+nl+'Va reamintesc procedura de predare: Instructiune Predarea proiectelor - LVD_IL11.00-03.'+nl+nl+'Nu uitati, documentatia PTDE trebuie si SCANATA! Nu printam acum antemasuratorile si fisele tehnice.'+nl+nl+'! Va rog sa confirmati citirea mesajului si sa anuntati neaparat in cazul in care apare ceva ce ar interfera cu termenul comunicat, pentru a putea gestiona din timp situatia. Anuntati si dupa ce ati pus documentatia in folderul de predare.'+nl+nl+'De asemenea, va rog ca in BIM si ACC sa se regaseasca ultima varianta urcata, cea printata, si sa confirmati in scris prin Reply la acest mesaj. Spor!';\nT['F. Detach PT predat'] = 'Buna General, trebuie sa realizam detach-urile pentru PT-ul predat in ACC.'+(L?(nl+nl+'Folder ACC: '+L):'')+(DET?(nl+nl+DET):'')+nl+nl+'Confirmati prin Reply. Multumesc!';\nT['F. Predare DALI (1 exemplar)'] = 'Buna General,'+nl+nl+'Important! Pe '+D+' (pana la finalul zilei) trebuie sa avem gata de predare in format fizic catre beneficiar documentatia DALI - 1 exemplar.'+(L?(nl+nl+'Folder de predare: '+L):'')+nl+nl+'In acest scop, cel tarziu pana la termen, trebuie sa avem TOATA DOCUMENTATIA pe TOATE SPECIALITATILE:'+nl+'- printata'+nl+'- indosariata'+nl+'- semnata si stampilata de catre proiectanti'+nl+nl+'De asemenea, trebuie sa incarcam in ACC detach-urile (DALI_Detach Revit) pentru acces catre beneficiar.'+nl+nl+'Va rog sa dati Reply la acest mesaj in momentul in care ati pus plansele finale in folder. Asigurati-va ca ati completat pe fiecare specialitate piesele scrise, la toate capitolele unde apare specialitatea voastra.'+nl+nl+'Multumesc!';\nconst msg = T[t] || ('[Sablon indisponibil pentru: '+t+']'+nl+DET);\nreturn [{ json: { message: msg, tip: t } }];\n"
+      },
+      "id": "29b50239-a023-46d8-a7cf-01d9475f1a2e",
+      "name": "Compune mesajul din template",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "rs1",
+              "leftValue": "={{ $('Determina profil').item.json.profil }}",
+              "rightValue": "sedinta_data",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1bb2adbe-84c1-4972-b779-f0826b8269eb",
+      "name": "Este sedinta cu data?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $('Determina profil').item.json.teamId + '/channels/' + $('Determina profil').item.json.channelId + '/members' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "ae497669-e838-40e7-b3cf-1e4a78750fa3",
+      "name": "Obtine Membri Canal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Determina profil').item.json;\nconst f = ctx;\nconst msg = $('Compune mesajul din template').item.json.message || '';\nconst iso = (f.data || '').substring(0, 10);\nconst start = iso + 'T' + (f.ora || '00:00') + ':00';\nconst end = iso + 'T' + (f.ora_sfarsit || f.ora || '00:00') + ':00';\nconst members = ($('Obtine Membri Canal').item.json.value) || [];\nconst participants = members.filter(function(m){ return m.email; }).map(function(m){ return m.email; });\nconst title = (f.nume_proiect ? f.nume_proiect + ' - ' : '') + (ctx.tip_postare || '').replace(/^[A-F]\\. /, '');\nreturn [{ json: { meetingTitle: title, confirmedDateTime: start, confirmedEndDateTime: end, participants: participants, agendaText: msg, onlineMeeting: true } }];"
+      },
+      "id": "66021bb8-0f96-48ca-9167-4f66ad1340b2",
+      "name": "Pregateste Programare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.microsoft.com/v1.0/me/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftOutlookOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ subject: $json.meetingTitle, start: { dateTime: $json.confirmedDateTime, timeZone: 'Europe/Bucharest' }, end: { dateTime: $json.confirmedEndDateTime, timeZone: 'Europe/Bucharest' }, body: { contentType: 'text', content: $json.agendaText }, isOnlineMeeting: $json.onlineMeeting, onlineMeetingProvider: 'teamsForBusiness', attendees: $json.participants.map(email => ({ emailAddress: { address: email }, type: 'required' })) }) }}",
+        "options": {}
+      },
+      "id": "5de0bc4b-8d37-441b-bfd5-195d49471cac",
+      "name": "Creeaza Eveniment Calendar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        448,
+        0
+      ],
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "uZI14epDrgoU1Ecz",
+          "name": "Microsoft Outlook account 20"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const composed = $('Compune mesajul din template').item.json.message || '';\nconst tip = $('Compune mesajul din template').item.json.tip || '';\nreturn [{ json: { message: composed, tip: tip } }];"
+      },
+      "id": "5fe0c092-31d1-45f9-8a00-7c34890963a6",
+      "name": "Finalizeaza Mesaj Draft",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $('Webhook Trimite').item.json.body || {};\nconst msg = b.message || '';\nconst t = b.tip_postare || '';\nconst teamId = b.teamId || '';\nconst channelId = b.channelId || '';\nconst channelName = b.channelName || 'General';\nconst title = t.replace(/^[A-F]\\. /, '');\nconst extra = Array.isArray(b.mentions) ? b.mentions : [];\n\nconst graphMentions = [ { id: 0, mentionText: channelName, mentioned: { conversation: { id: channelId, displayName: channelName, conversationIdentityType: 'channel' } } } ];\nlet nextId = 1;\n\nconst htmlMsg = msg.replace(/@\\[([^\\]]+)\\]/g, function(match, name){\n  const info = extra.find(function(m){ return m.displayName === name; });\n  if (!info) return match;\n  if (info.type === 'channel' && info.id) {\n    const id = nextId++;\n    graphMentions.push({ id: id, mentionText: name, mentioned: { conversation: { id: info.id, displayName: name, conversationIdentityType: 'channel' } } });\n    return '<at id=\"' + id + '\">' + name + '</at>';\n  }\n  if ((info.type === 'user' || info.type === 'external') && info.id) {\n    const id = nextId++;\n    graphMentions.push({ id: id, mentionText: name, mentioned: { user: { id: info.id, displayName: name, userIdentityType: 'aadUser' } } });\n    return '<at id=\"' + id + '\">' + name + '</at>';\n  }\n  return '<strong>' + name + (info.email ? ' (' + info.email + ')' : '') + '</strong>';\n}).split('\\n').join('<br>');\n\nconst bodyContent = '<at id=\"0\">' + channelName + '</at><br><br>' + htmlMsg;\nconst graphBody = { subject: title, body: { contentType: 'html', content: bodyContent }, mentions: graphMentions };\nconst url = 'https://graph.microsoft.com/v1.0/teams/' + teamId + '/channels/' + channelId + '/messages';\nreturn [{ json: { url: url, graphBody: graphBody } }];"
+      },
+      "id": "97d3ed8c-2102-49d0-b610-0f825670b947",
+      "name": "Pregateste Graph",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.graphBody) }}",
+        "options": {}
+      },
+      "id": "3a56abf5-f863-44f4-a74d-180f3c875897",
+      "name": "Posteaza in Teams (Graph)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1664,
+        256
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "postare-teams/cauta-echipa",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c18ad054-db2c-44ee-af04-be9f934d147b",
+      "name": "Webhook Cauta Echipa",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2496,
+        96
+      ],
+      "webhookId": "6b7a2e92-f1c7-40d0-a5ed-28479435c02b"
+    },
+    {
+      "parameters": {
+        "jsCode": "const teamId = $('Filtreaza Echipa Dupa Cod').item.json.value[0].id;\nconst channels = ($('Obtine Canale Echipa').item.json.value || []).map(function(c){ return { id: c.id, displayName: c.displayName }; });\nconst members = ($json.value || []).map(function(m){ return { id: m.userId, displayName: m.displayName, email: m.email || '' }; }).filter(function(m){ return m.id && m.displayName; });\nreturn [{ json: { teamId: teamId, channels: channels, members: members } }];"
+      },
+      "id": "b77d7314-5a70-4e74-970c-8e894bff5ff6",
+      "name": "Pregateste Raspuns Canale",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1296,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "63127022-433a-4522-a93f-7ae1caefd198",
+      "name": "Respond Echipa Gasita",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1120,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { error: 'Nu am gasit exact o echipa pentru codul introdus (0 sau mai multe rezultate). Verificati codul si reincercati.' } }];"
+      },
+      "id": "293bc569-152c-431c-a172-0b76f281f0d1",
+      "name": "Pregateste Eroare Echipa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1664,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 404
+        }
+      },
+      "id": "fe825915-fc4d-4e56-bdd3-69485f14e24c",
+      "name": "Respond Echipa Invalid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1424,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "postare-teams/genereaza-mesaj",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "352687f4-0b5a-44dd-b6bb-c7e5d32c5cd5",
+      "name": "Webhook Genereaza Mesaj",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -832,
+        96
+      ],
+      "webhookId": "5f2e9584-4f4b-4d5e-b353-18a057830065"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "c79561e7-7eb3-4719-902b-3e68cedf1484",
+      "name": "Respond Draft",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "postare-teams/trimite",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "0fe99e66-4d4c-4045-bdb1-8122e00d057f",
+      "name": "Webhook Trimite",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        1088,
+        144
+      ],
+      "webhookId": "3d6004f5-0b97-4742-b8ae-64385c620225"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { success: true, id: ($json.id || null) } }];"
+      },
+      "id": "0d16f281-b059-4895-a669-5a5ece3c7758",
+      "name": "Pregateste Raspuns Trimitere",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "095e24f9-2515-4f05-b0d6-d55bc291cfc4",
+      "name": "Respond Trimis",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2112,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://graph.microsoft.com/v1.0/me/joinedTeams",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "488387d6-8a5a-41bc-9cf2-bb22d0944474",
+      "name": "Cauta Echipa Dupa Cod",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2272,
+        96
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const codEchipa = ($('Webhook Cauta Echipa').item.json.body || {}).cod_echipa || '';\nconst teams = ($json.value) || [];\nconst matched = teams.filter(function(t){ return (t.displayName || '').slice(0, 7) === codEchipa; });\nreturn [{ json: { value: matched } }];"
+      },
+      "id": "e62a139b-cdae-492f-bb53-7bf9978ee404",
+      "name": "Filtreaza Echipa Dupa Cod",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2064,
+        96
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Echipa Gasita?": {
+      "main": [
+        [
+          {
+            "node": "Obtine Canale Echipa",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pregateste Eroare Echipa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compune mesajul din template": {
+      "main": [
+        [
+          {
+            "node": "Este sedinta cu data?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Este sedinta cu data?": {
+      "main": [
+        [
+          {
+            "node": "Obtine Membri Canal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregateste Programare": {
+      "main": [
+        [
+          {
+            "node": "Creeaza Eveniment Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creeaza Eveniment Calendar": {
+      "main": [
+        [
+          {
+            "node": "Finalizeaza Mesaj Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregateste Graph": {
+      "main": [
+        [
+          {
+            "node": "Posteaza in Teams (Graph)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtine Canale Echipa": {
+      "main": [
+        [
+          {
+            "node": "Obtine Membri Echipa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtine Membri Echipa": {
+      "main": [
+        [
+          {
+            "node": "Pregateste Raspuns Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregateste Raspuns Canale": {
+      "main": [
+        [
+          {
+            "node": "Respond Echipa Gasita",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregateste Eroare Echipa": {
+      "main": [
+        [
+          {
+            "node": "Respond Echipa Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Genereaza Mesaj": {
+      "main": [
+        [
+          {
+            "node": "Determina profil",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determina profil": {
+      "main": [
+        [
+          {
+            "node": "Compune mesajul din template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Posteaza in Teams (Graph)": {
+      "main": [
+        [
+          {
+            "node": "Pregateste Raspuns Trimitere",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregateste Raspuns Trimitere": {
+      "main": [
+        [
+          {
+            "node": "Respond Trimis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Cauta Echipa": {
+      "main": [
+        [
+          {
+            "node": "Cauta Echipa Dupa Cod",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cauta Echipa Dupa Cod": {
+      "main": [
+        [
+          {
+            "node": "Filtreaza Echipa Dupa Cod",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtreaza Echipa Dupa Cod": {
+      "main": [
+        [
+          {
+            "node": "Echipa Gasita?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Trimite": {
+      "main": [
+        [
+          {
+            "node": "Pregateste Graph",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtine Membri Canal": {
+      "main": [
+        [
+          {
+            "node": "Pregateste Programare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalizeaza Mesaj Draft": {
+      "main": [
+        [
+          {
+            "node": "Respond Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "616e7413-267a-4d2b-a311-d59842d8ed38",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "a6884e6b2ddf8adc0c16b0503b06e4faaaa9137e91ba6022d296144979d7874a"
+  },
+  "nodeGroups": [],
+  "id": "Y40ZYCTlbaAXiPVZ",
+  "tags": []
+}
