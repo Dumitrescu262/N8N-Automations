@@ -1,0 +1,336 @@
+{
+  "name": "Inițializare Echipă - Foldere",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "1aa52ec6-fe18-48df-8478-efb3ae8bfd17",
+      "name": "Primeste Date din Workflow Principal",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -192,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $json.team_id + '/channels' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "070d1f3d-412a-465c-b1c6-22d368082041",
+      "name": "Obtine Canale Echipa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        0
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const folderMap = {\"General\": [\"00.Organizare\", \"01.Tema proiectare.Caiet de sarcini\", \"02.Avize si acorduri\", \"03.Studii teren\", \"04.Corespondenta beneficiar\", \"05.Plan de situatie. Teme\", \"06.Informatii site. Corespondenta santier\", \"07.Documente discutii sedinte\", \"99.Recording sedinte\", \"00.Organizare/01.Lansare proiect\", \"00.Organizare/02.Infobook+RFI\", \"00.Organizare/03.Date generale proiect\", \"00.Organizare/04.Antet piese scrise\", \"00.Organizare/05.Familie cartus\", \"00.Organizare/06.Amplasament\", \"00.Organizare/07.Reguli de proiectare\", \"00.Organizare/08.Normative de proiectare\", \"02.Avize si acorduri/01.Doc primita la SF\", \"02.Avize si acorduri/02.Avize obtinute\", \"02.Avize si acorduri/03.Certificat de Urbanism\", \"03.Studii teren/01.Studiu Geotehnic\", \"03.Studii teren/02.Studiu Topografic\", \"04.Corespondenta beneficiar/01.Primite\", \"04.Corespondenta beneficiar/02.Transmise\", \"06.Informatii site. Corespondenta santier/01.Transmise.Solicitate\", \"06.Informatii site. Corespondenta santier/02.Primite\", \"03.Studii teren/01.Studiu Geotehnic/01.Transmise.Teme\", \"03.Studii teren/01.Studiu Geotehnic/02.Primite\", \"03.Studii teren/02.Studiu Topografic/01.Transmise.Teme\", \"03.Studii teren/02.Studiu Topografic/02.Primite\", \"03.Studii teren/01.Studiu Geotehnic/01.Transmise.Teme/xxxx.xx.xx_Tema GEO\", \"03.Studii teren/01.Studiu Geotehnic/02.Primite/01.Doc.primita la SF\", \"03.Studii teren/02.Studiu Topografic/01.Transmise.Teme/xxxx.xx.xx_Tema TOPO\", \"03.Studii teren/02.Studiu Topografic/02.Primite/01.Doc.primita la SF\"], \"1.Birou Arhitectura\": [\"00.Organizare\", \"01.Piese scrise\", \"03.Colaborare subcontractanti\", \"03.Teme catre Arhitectura\", \"01.Piese scrise/01.DTAC\", \"01.Piese scrise/02.PTDE\", \"03.Colaborare subcontractanti/01.Subcontractant xxxx\", \"03.Colaborare subcontractanti/01.Subcontractant xxxx/01.Transmise.Teme\", \"03.Colaborare subcontractanti/01.Subcontractant xxxx/02.Primite\"], \"2.Birou Structuri\": [\"00.Organizare\", \"01.Piese scrise\", \"02.Colaborare subcontractanti\", \"03.Confectii metalice\", \"04.Teme catre Rezistenta\", \"05.Schite armare\", \"02.Colaborare subcontractanti/01.Subcontractant xxxx\", \"03.Confectii metalice/01.Teme metal\", \"03.Confectii metalice/02.Documentatie metal\", \"04.Teme catre Rezistenta/01.Teme de la Instalatii\", \"04.Teme catre Rezistenta/02.Tema Exterioare\", \"02.Colaborare subcontractanti/01.Subcontractant xxxx/01.Transmise.Teme\", \"02.Colaborare subcontractanti/01.Subcontractant xxxx/02.Primite\"], \"3.Birou Instalatii\": [\"00.Organizare\", \"01.Piese scrise\", \"02.Instalatii electrice\", \"03.Instalatii sanitare\", \"04.Instalatii termice si ventilatii\", \"05.Colaborare subcontractanti\", \"06.Teme catre Instalatii\", \"05.Colaborare subcontractanti/01.Subcontractant xxxx\", \"05.Colaborare subcontractanti/01.Subcontractant xxxx/01.Transmise.Tema\", \"05.Colaborare subcontractanti/01.Subcontractant xxxx/02.Primite\"], \"4.Compartiment Devize\": [\"01.Liste cantitati Licitatie\", \"02.Liste cantitati proiectanti\", \"03.Fise tehnice\", \"04.Dotari si echipamente\"], \"9.1 Drumuri\": [\"00.Organizare\", \"01.Piese scrise\", \"02.Colaborare subcontractanti\", \"03.Teme catre Drumuri\", \"02.Colaborare subcontractanti/01.Subcontractant xxxx\", \"02.Colaborare subcontractanti/01.Subcontractant xxxx/01.Transmise.Teme\", \"02.Colaborare subcontractanti/01.Subcontractant xxxx/02.Primite\"]};\n\nconst teamId = $('Primeste Date din Workflow Principal').first().json.team_id;\nconst canale = $input.first().json.value;\nconst rezultate = [];\nfor (const nume of Object.keys(folderMap)) {\n  const canal = canale.find(c => c.displayName === nume);\n  if (canal) {\n    rezultate.push({ json: { team_id: teamId, channelName: nume, channelId: canal.id, foldere: folderMap[nume] } });\n  }\n}\nreturn rezultate;"
+      },
+      "id": "76ceda19-0601-4c6e-bd27-01531c6abe67",
+      "name": "Construieste Lista Foldere pe Canal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://graph.microsoft.com/v1.0/teams/' + $json.team_id + '/channels/' + $json.channelId + '/filesFolder' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "feeca706-ed5e-4ec8-ab26-66e6a77af782",
+      "name": "Obtine Folder Fisiere Canal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        672,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "g1",
+              "name": "driveId",
+              "type": "string",
+              "value": "={{ $json.parentReference.driveId }}"
+            },
+            {
+              "id": "g2",
+              "name": "filesFolderId",
+              "type": "string",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "id": "g3",
+              "name": "channelName",
+              "type": "string",
+              "value": "={{ $('Construieste Lista Foldere pe Canal').item.json.channelName }}"
+            },
+            {
+              "id": "g4",
+              "name": "foldere",
+              "type": "array",
+              "value": "={{ $('Construieste Lista Foldere pe Canal').item.json.foldere }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aa5f3d68-9616-4d33-b300-ca7c176862e0",
+      "name": "Pregateste Date Canal Foldere",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        896,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "foldere",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "id": "abc02829-d774-42da-94b7-e1e25539a2fa",
+      "name": "Imparte Foldere de Creat",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "h1",
+              "name": "parinte",
+              "type": "string",
+              "value": "={{ $json.foldere.includes('/') ? $json.foldere.split('/').slice(0, -1).join('/') : '' }}"
+            },
+            {
+              "id": "h2",
+              "name": "nume",
+              "type": "string",
+              "value": "={{ $json.foldere.includes('/') ? $json.foldere.split('/').slice(-1)[0] : $json.foldere }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "36ad2c33-1aec-4e55-a485-20b074670e9a",
+      "name": "Calculeaza Parinte si Nume",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1344,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.parinte ? ('https://graph.microsoft.com/v1.0/drives/' + $json.driveId + '/items/' + $json.filesFolderId + ':/' + $json.parinte.split('/').map(s => encodeURIComponent(s)).join('/') + ':/children') : ('https://graph.microsoft.com/v1.0/drives/' + $json.driveId + '/items/' + $json.filesFolderId + '/children') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"name\": $json.nume, \"folder\": {}, \"@microsoft.graph.conflictBehavior\": \"fail\" } }}",
+        "options": {}
+      },
+      "id": "229c15a5-8ce8-4887-b8bf-a378a08261b7",
+      "name": "Creeaza Folder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1568,
+        0
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { status: 'ok', mesaj: 'Structura de foldere a fost creata in canalele General, 1.Birou Arhitectura, 2.Birou Structuri, 3.Birou Instalatii, 4.Compartiment Devize si 9.1 Drumuri.' } }];"
+      },
+      "id": "c4f0e555-761b-45b2-a184-444daef218eb",
+      "name": "Confirmare Foldere Create",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "id": "f1a2b3c4-5d6e-4f70-8a9b-0c1d2e3f4a5b",
+      "name": "Asteapta Provizionare Foldere Canale",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        16,
+        0
+      ],
+      "webhookId": "e64466eb-19ca-4936-8c2c-5ca1bd7a35ce"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Obtine Canale Echipa": {
+      "main": [
+        [
+          {
+            "node": "Construieste Lista Foldere pe Canal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construieste Lista Foldere pe Canal": {
+      "main": [
+        [
+          {
+            "node": "Obtine Folder Fisiere Canal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtine Folder Fisiere Canal": {
+      "main": [
+        [
+          {
+            "node": "Pregateste Date Canal Foldere",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregateste Date Canal Foldere": {
+      "main": [
+        [
+          {
+            "node": "Imparte Foldere de Creat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imparte Foldere de Creat": {
+      "main": [
+        [
+          {
+            "node": "Calculeaza Parinte si Nume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculeaza Parinte si Nume": {
+      "main": [
+        [
+          {
+            "node": "Creeaza Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creeaza Folder": {
+      "main": [
+        [
+          {
+            "node": "Confirmare Foldere Create",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Primeste Date din Workflow Principal": {
+      "main": [
+        [
+          {
+            "node": "Asteapta Provizionare Foldere Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asteapta Provizionare Foldere Canale": {
+      "main": [
+        [
+          {
+            "node": "Obtine Canale Echipa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "0b98cf26-61cf-44c8-bc7a-dd1958c00088",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "a6884e6b2ddf8adc0c16b0503b06e4faaaa9137e91ba6022d296144979d7874a"
+  },
+  "nodeGroups": [],
+  "id": "4wr0uhWiRdrTGNTk",
+  "tags": []
+}

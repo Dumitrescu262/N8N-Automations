@@ -1,0 +1,507 @@
+{
+  "name": "Inițializare Echipă",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "initializare-echipa-teams",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "41d6d98a-60d5-48c8-96b2-88fc1d2b4038",
+      "name": "Webhook Formular Echipă",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2000,
+        -336
+      ],
+      "webhookId": "72974338-8cf4-41d7-b879-4bf71007a1ce"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "n1",
+              "name": "cod_proiect",
+              "type": "string",
+              "value": "={{ $json.body?.cod_proiect ?? $json.cod_proiect }}"
+            },
+            {
+              "id": "n2",
+              "name": "nume_proiect",
+              "type": "string",
+              "value": "={{ $json.body?.nume_proiect ?? $json.nume_proiect }}"
+            },
+            {
+              "id": "n3",
+              "name": "amplasament",
+              "type": "string",
+              "value": "={{ $json.body?.amplasament ?? $json.amplasament }}"
+            },
+            {
+              "id": "n4",
+              "name": "firma",
+              "type": "string",
+              "value": "={{ $json.body?.firma ?? $json.firma }}"
+            },
+            {
+              "id": "n5",
+              "name": "design_and_build",
+              "type": "string",
+              "value": "={{ $json.body?.design_and_build ?? $json.design_and_build ?? \"Nu\" }}"
+            },
+            {
+              "id": "n6",
+              "name": "responsabil_email",
+              "type": "string",
+              "value": "={{ $json.body?.responsabil_email ?? $json.responsabil_email }}"
+            },
+            {
+              "id": "n7",
+              "name": "canale_suplimentare",
+              "type": "string",
+              "value": "={{ $json.body?.canale_suplimentare ?? $json.canale_suplimentare ?? \"\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2bc6498c-6bc3-483c-a175-2ae5ed59892e",
+      "name": "Normalizează Payload Webhook",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1760,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "nume_echipa",
+              "type": "string",
+              "value": "={{ $json.cod_proiect }}_{{ $json.firma }}{{ $json.design_and_build === \"Da\" ? \"_D&B\" : \"\" }}_{{ $json.amplasament }}"
+            },
+            {
+              "id": "c2",
+              "name": "canale_suplimentare_array",
+              "type": "array",
+              "value": "={{ $json.canale_suplimentare ? $json.canale_suplimentare.split(\",\").map(o => o.trim()).filter(o => o) : [] }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "aa5107c5-d93e-4269-ba1a-0571481cd209",
+      "name": "Calculează Nume Echipă & Canale",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1520,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.microsoft.com/v1.0/teams",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"template@odata.bind\": \"https://graph.microsoft.com/v1.0/teamsTemplates('standard')\", \"displayName\": $json.nume_echipa, \"description\": $json.nume_proiect } }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "0e1f9681-55e5-4f87-86ce-70c71781c960",
+      "name": "Creează Echipa Teams",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1280,
+        -336
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1",
+              "name": "team_id",
+              "type": "string",
+              "value": "={{ $json.headers['content-location'].match(/\\('([^']+)'\\)/)[1] }}"
+            },
+            {
+              "id": "b2",
+              "name": "nume_echipa",
+              "type": "string",
+              "value": "={{ $('Calculează Nume Echipă & Canale').item.json.nume_echipa }}"
+            },
+            {
+              "id": "b3",
+              "name": "nume_proiect",
+              "type": "string",
+              "value": "={{ $('Calculează Nume Echipă & Canale').item.json.nume_proiect }}"
+            },
+            {
+              "id": "b4",
+              "name": "responsabil_email",
+              "type": "string",
+              "value": "={{ $('Calculează Nume Echipă & Canale').item.json.responsabil_email }}"
+            },
+            {
+              "id": "b5",
+              "name": "canale_suplimentare_array",
+              "type": "array",
+              "value": "={{ $('Calculează Nume Echipă & Canale').item.json.canale_suplimentare_array }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3c2bd8af-2141-4424-bd83-52fdd970c9bc",
+      "name": "Extrage Team ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1040,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "id": "e3b0a2a5-8b18-4632-b6fd-cd5d17864b59",
+      "name": "Așteaptă Provisioning",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -800,
+        -336
+      ],
+      "webhookId": "4d5fe1a3-cdc5-4804-be28-c0418572bb32"
+    },
+    {
+      "parameters": {},
+      "id": "3a2bb38c-d5be-4d71-8220-b9a0fa581127",
+      "name": "Așteaptă Finalizare",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        576,
+        -288
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"ok\", \"mesaj\": \"Echipa \" + $('Extrage Team ID').item.json.nume_echipa + \" a fost creată cu succes! Toate canalele obligatorii și membrii din roster au fost adăugați.\" } }}",
+        "options": {}
+      },
+      "id": "c138b703-1022-4388-8ba7-8b8cde3c11d4",
+      "name": "Confirmare Echipă Creată",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        768,
+        -288
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "cachedResultName": "Inițializare Echipă - Utilizatori",
+          "mode": "id",
+          "value": "ts1mqb3P7Eerrti2"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "779b09c6-1681-4d02-bb33-036a56333d5a",
+      "name": "Apeleaza Workflow Utilizatori",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -576,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "p1",
+              "name": "team_id",
+              "type": "string",
+              "value": "={{ $('Extrage Team ID').item.json.team_id }}"
+            },
+            {
+              "id": "p2",
+              "name": "nume_echipa",
+              "type": "string",
+              "value": "={{ $('Extrage Team ID').item.json.nume_echipa }}"
+            },
+            {
+              "id": "p3",
+              "name": "canale_suplimentare_array",
+              "type": "array",
+              "value": "={{ $('Extrage Team ID').item.json.canale_suplimentare_array }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "877c2430-d158-4722-b0a1-a5b8ab87f2dd",
+      "name": "Pregateste Date Canale",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -432,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "cachedResultName": "Inițializare Echipă - Canale",
+          "mode": "id",
+          "value": "KiJPxD2nC91Nbuue"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "89eeaa3b-6782-432d-8eec-f94286d7df97",
+      "name": "Apeleaza Workflow Celelalte Canale",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -192,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "q1",
+              "name": "team_id",
+              "type": "string",
+              "value": "={{ $('Pregateste Date Canale').item.json.team_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d3c1e9a7-2b4f-4a6e-9c11-7f8b3e5d6a90",
+      "name": "Pregateste Date Foldere",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        48,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "cachedResultName": "Inițializare Echipă - Foldere",
+          "mode": "id",
+          "value": "4wr0uhWiRdrTGNTk"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "e6f2b4c8-3d5a-4b7e-8f12-9a0c1d2e3f45",
+      "name": "Apeleaza Workflow Foldere",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        272,
+        -336
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Formular Echipă": {
+      "main": [
+        [
+          {
+            "node": "Normalizează Payload Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizează Payload Webhook": {
+      "main": [
+        [
+          {
+            "node": "Calculează Nume Echipă & Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculează Nume Echipă & Canale": {
+      "main": [
+        [
+          {
+            "node": "Creează Echipa Teams",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creează Echipa Teams": {
+      "main": [
+        [
+          {
+            "node": "Extrage Team ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrage Team ID": {
+      "main": [
+        [
+          {
+            "node": "Așteaptă Provisioning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Așteaptă Provisioning": {
+      "main": [
+        [
+          {
+            "node": "Apeleaza Workflow Utilizatori",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Pregateste Date Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Așteaptă Finalizare": {
+      "main": [
+        [
+          {
+            "node": "Confirmare Echipă Creată",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregateste Date Canale": {
+      "main": [
+        [
+          {
+            "node": "Apeleaza Workflow Celelalte Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apeleaza Workflow Utilizatori": {
+      "main": [
+        [
+          {
+            "node": "Așteaptă Finalizare",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Apeleaza Workflow Celelalte Canale": {
+      "main": [
+        [
+          {
+            "node": "Pregateste Date Foldere",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregateste Date Foldere": {
+      "main": [
+        [
+          {
+            "node": "Apeleaza Workflow Foldere",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apeleaza Workflow Foldere": {
+      "main": [
+        [
+          {
+            "node": "Așteaptă Finalizare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "650ff9a5-ad93-4307-9509-651838272ddf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "a6884e6b2ddf8adc0c16b0503b06e4faaaa9137e91ba6022d296144979d7874a"
+  },
+  "nodeGroups": [],
+  "id": "IO0nGzPAnGUV4xx3",
+  "tags": []
+}

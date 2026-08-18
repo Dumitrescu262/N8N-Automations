@@ -1,0 +1,363 @@
+{
+  "name": "Inițializare Echipă - Canale",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "fbfd1229-d961-475c-bb8a-879ec49e9270",
+      "name": "Primeste Date din Workflow Echipa",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -224,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "canale_fixe",
+              "type": "array",
+              "value": "={{ [ { \"name\": \"00.SEDINTE COORDONARE\", \"tip\": \"standard\" }, { \"name\": \"0.Urgente\", \"tip\": \"standard\" }, { \"name\": \"0.1.Tipizate.Checklists.Proceduri\", \"tip\": \"standard\" }, { \"name\": \"1.Birou Arhitectura\", \"tip\": \"standard\" }, { \"name\": \"2.Birou Structuri\", \"tip\": \"standard\" }, { \"name\": \"3.Birou Instalatii\", \"tip\": \"standard\" }, { \"name\": \"4.Compartiment Devize\", \"tip\": \"standard\" }, { \"name\": \"6.Compartiment Contracte (privat)\", \"tip\": \"private\" }, { \"name\": \"9.1 Drumuri\", \"tip\": \"standard\" }, { \"name\": \"9.2 Verificari Proiect – DTAC 1\", \"tip\": \"standard\" }, { \"name\": \"9.3 Verificari Proiect – DTAC 2\", \"tip\": \"standard\" }, { \"name\": \"9.4 Verificari Proiect – DTAC 3\", \"tip\": \"standard\" }, { \"name\": \"9.5 Verificari Proiect – DTAC 4_ARH\", \"tip\": \"standard\" }, { \"name\": \"9.6 Verificari Proiect – PT.DE 1\", \"tip\": \"standard\" }, { \"name\": \"9.7 Verificari Proiect – PT.DE 2\", \"tip\": \"standard\" }, { \"name\": \"9.8 Verificari Proiect – PT.DE 3\", \"tip\": \"standard\" }, { \"name\": \"9.9 Verificari Proiect – PT.DE 4_ARH\", \"tip\": \"standard\" }, { \"name\": \"9.99999 Corespondenta Oficiala (Privat)\", \"tip\": \"private\" }, { \"name\": \"PLAN DE SITUATIE\", \"tip\": \"standard\" } ] }}"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b101a5b5-2493-4844-8c58-1eaca2596c25",
+      "name": "Canale Fixe Obligatorii (Lista)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "canale_fixe",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "id": "a804654b-f93b-4123-bc04-524abdda446a",
+      "name": "Imparte Canale Fixe",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "teamId": "={{ $json.team_id }}",
+        "name": "={{ $json.canale_fixe.name }}",
+        "options": {
+          "type": "={{ $json.canale_fixe.tip }}"
+        }
+      },
+      "id": "a631dfb4-1270-4648-937b-877107f01dc8",
+      "name": "Creeaza Canal Fix",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "canale_suplimentare_array",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "id": "5bbbbe7b-d6cc-41ac-808e-61afa60c666c",
+      "name": "Imparte Canale Suplimentare",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        0,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "teamId": "={{ $json.team_id }}",
+        "name": "={{ $json.canale_suplimentare_array }}",
+        "options": {
+          "type": "standard"
+        }
+      },
+      "id": "eb9a1b3d-3891-4cf9-9701-eee359be84de",
+      "name": "Creeaza Canal Suplimentar",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        192
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "teamId": "={{ $('Primeste Date din Workflow Echipa').first().json.team_id }}",
+        "channelId": "={{ $('Filtreaza Canal General').first().json.id }}",
+        "message": "=Echipa de proiect {{ $('Primeste Date din Workflow Echipa').first().json.nume_echipa }} a fost creată.<br><br>@Achiziții @Juridic – vă rugăm să încărcați:<br><br><strong>Pe server, în Tema proiectare-Documente:</strong><ul><li>Tema completă de proiectare (Caiet de sarcini, memoriu, piese scrise și desenate etc.)</li><li>Cantitățile de la licitație și oferta financiară</li><li>Personalul cheie</li><li>Clarificările de la licitație</li></ul><strong>În Teams, în canalul 6.Compartiment Contracte, imediat ce aveți documentul:</strong><ul><li>Contractul (cel puțin prima pagină cu datele generale)</li></ul>Vă rugăm să răspundeți cu Reply la acest mesaj când informațiile solicitate au fost încărcate.<br><br>Mulțumim frumos!",
+        "options": {}
+      },
+      "id": "04cb891b-edb1-48ab-a07c-78dcc950911b",
+      "name": "Posteaza Mesaj Initial",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        496,
+        400
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "id": "a65d4041-2b98-411f-9372-3cca5d757ef8",
+      "name": "Asteapta Finalizare Canale",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        688,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { status: 'ok', mesaj: 'Canalele fixe si suplimentare au fost create, iar mesajul initial a fost postat in canalul General.' } }];"
+      },
+      "id": "0454287d-3073-4c29-a123-077dccf5cbb4",
+      "name": "Confirmare Canale Finalizate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "teamId": "={{ $json.team_id }}",
+        "returnAll": true
+      },
+      "id": "c0c3ff59-0c35-4ddd-b59b-84ce6a887778",
+      "name": "Listeaza Canale Echipa",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        400
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.displayName }}",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              },
+              "rightValue": "General"
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "id": "368699e2-6f7b-48d2-9274-828139c87a02",
+      "name": "Filtreaza Canal General",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        400
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Primeste Date din Workflow Echipa": {
+      "main": [
+        [
+          {
+            "node": "Canale Fixe Obligatorii (Lista)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Imparte Canale Suplimentare",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Listeaza Canale Echipa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canale Fixe Obligatorii (Lista)": {
+      "main": [
+        [
+          {
+            "node": "Imparte Canale Fixe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imparte Canale Fixe": {
+      "main": [
+        [
+          {
+            "node": "Creeaza Canal Fix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creeaza Canal Fix": {
+      "main": [
+        [
+          {
+            "node": "Asteapta Finalizare Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Imparte Canale Suplimentare": {
+      "main": [
+        [
+          {
+            "node": "Creeaza Canal Suplimentar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Creeaza Canal Suplimentar": {
+      "main": [
+        [
+          {
+            "node": "Asteapta Finalizare Canale",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Posteaza Mesaj Initial": {
+      "main": [
+        [
+          {
+            "node": "Asteapta Finalizare Canale",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Asteapta Finalizare Canale": {
+      "main": [
+        [
+          {
+            "node": "Confirmare Canale Finalizate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listeaza Canale Echipa": {
+      "main": [
+        [
+          {
+            "node": "Filtreaza Canal General",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtreaza Canal General": {
+      "main": [
+        [
+          {
+            "node": "Posteaza Mesaj Initial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "9478cbce-e6eb-4cbf-ae7e-17a0364e2626",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "a6884e6b2ddf8adc0c16b0503b06e4faaaa9137e91ba6022d296144979d7874a"
+  },
+  "nodeGroups": [],
+  "id": "KiJPxD2nC91Nbuue",
+  "tags": []
+}
