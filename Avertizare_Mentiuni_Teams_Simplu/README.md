@@ -46,3 +46,11 @@ Se verifică doar ultimele 50 de mesaje per canal (configurabil) — o mențiune
 
 ![Workflow 1](images/Workflow1.png)
 ![Workflow 2](images/Workflow2.png)
+
+## Funcționalitate workflow
+
+Într-o companie cu mai multe proiecte rulând în paralel, mențiunile fără răspuns se pierd ușor în volumul de mesaje — nimeni nu are timp să verifice manual, în fiecare canal al fiecărui proiect, cine a fost menționat și n-a mai revenit cu un reply. Fără o astfel de verificare, solicitările rămân blocate zile întregi, uneori nesesizate decât atunci când deja au întârziat o fază a proiectului.
+
+Acest workflow preia integral acea verificare repetitivă: rulează singur, din oră în oră, pe toate echipele și canalele de proiect deodată, fără să depindă de atenția vreunei persoane. Reminderul e trimis automat, exact acolo unde a fost lăsată mențiunea inițială, iar jurnalul anti-duplicare garantează că aceeași persoană nu e deranjată de mai multe ori pentru același mesaj. Rezultatul practic: solicitările nu mai rămân uitate în conversații, iar responsabilii de proiect nu mai trebuie să verifice manual, canal cu canal, cine a răspuns și cine nu — timpul economisit astfel crește direct proporțional cu numărul de proiecte și canale active.
+
+Fiind o verificare simplă (bazată pe zile trecute, nu pe înțelegerea conținutului mesajului), rulează rapid și fără costuri suplimentare de procesare AI — potrivită ca prim nivel de siguranță, completat, acolo unde e nevoie de mai multă precizie, de varianta din `Avertizare_Mentiuni_Teams_Complex`.
