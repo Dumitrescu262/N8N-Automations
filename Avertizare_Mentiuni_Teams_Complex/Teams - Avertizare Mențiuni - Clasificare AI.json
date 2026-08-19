@@ -1,0 +1,399 @@
+{
+  "name": "Teams - Avertizare Mențiuni - Clasificare AI",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "802dad03-5800-4f9e-aa37-99ceec7dda59",
+      "name": "Primește Mesaje cu Mențiuni",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const f=$json;const text=String(f.messageBodyHtml||'').replace(/<at[^>]*>.*?<\\/at>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&nbsp;/gi,' ').replace(/&amp;/gi,'&').replace(/\\s+/g,' ').trim();\nconst teamChannels=(f.teamChannels||[]).map(c=>c.channelName);\nreturn {json:{...f,messageText:text,aiPrompt:`Analizează mesajul Teams și returnează DOAR JSON valid.\nData mesajului: ${f.createdDateTime}; timezone Europe/Bucharest.\nEchipa: ${f.teamName}; canal original: ${f.originalChannelName}; autor: ${f.authorName} (${f.authorId}).\nCanalele disponibile în această echipă: ${JSON.stringify(teamChannels)}\nPersoane menționate: ${JSON.stringify(f.mentions)}\nMesaj: ${text}\n\nIMPORTANT - un mesaj poate conține MAI MULTE solicitări/task-uri distincte (de exemplu, mai multe persoane sau aceeași persoană menționată de mai multe ori, fiecare cu subiect, canal sau termen diferit). Tratează FIECARE solicitare/task distinct(ă) ca un element SEPARAT în array-ul \"tasks\", cu propriile responsibleUsers, deadline, expectedAction și targetChannel. NU combina mai multe solicitări distincte într-un singur element. Dacă mesajul conține un singur subiect/o singură cerere (chiar dacă privește mai multe persoane împreună, ex. un task comun pentru 2 persoane), returnează un singur element în \"tasks\". Dacă o solicitare rămâne, de fapt, în canalul original (canalul în care a fost postat mesajul), NU crea un task separat doar pentru că ai recunoscut explicit numele acelui canal în text — acesta este tot cazul targetChannel.resolution=ORIGINAL, la fel ca atunci când canalul nu e menționat deloc. Creează task-uri separate DOAR când solicitările sunt cu adevărat distincte (subiect, persoană responsabilă, termen sau canal-țintă diferit de canalul original).\n\nPentru FIECARE element din \"tasks\", clasifică-l într-una din categoriile (messageType), specifice unui proiect de construcții/arhitectură:\n- INFORMATIV: anunță ceva, fără să ceară nimic înapoi. NU necesită reply.\n- INTREBARE: cere un răspuns concret la o întrebare. Necesită reply.\n- SOLICITARE_ACTIUNE: cere ca cineva să facă ceva concret (trimită un fișier, verifice un desen, semneze), nu neapărat un răspuns în cuvinte. Necesită reply/acțiune.\n- TASK: atribuire clară de sarcină, cu sau fără termen explicit. Necesită reply/acțiune.\n- REMINDER_ANTERIOR: reamintește o solicitare/task mai vechi încă nerezolvat. Necesită reply/acțiune, urgență ridicată.\n- CONFIRMARE: cere confirmare/aprobare/aviz (da/nu). Necesită reply.\n- ESCALADARE: problemă semnalată ca urgentă. Necesită reply/acțiune, urgență ridicată.\n- COORDONARE: propune întâlnire/programare, cere disponibilitate. Necesită reply.\n- FEEDBACK: comentariu/observație fără cerere explicită. NU necesită reply.\n- ALTA: nu se încadrează clar. NU necesită reply.\n\nReguli:\n- Exclude @channel/@team/@everyone.\n- requiresReply=true doar pentru: INTREBARE, SOLICITARE_ACTIUNE, TASK, REMINDER_ANTERIOR, CONFIRMARE, ESCALADARE, COORDONARE. Pentru INFORMATIV, FEEDBACK, ALTA => requiresReply=false.\n- urgency=URGENT pentru ESCALADARE și REMINDER_ANTERIOR, sau dacă mesajul folosește cuvinte ca \"urgent\", \"asap\", \"acum\", \"azi\", \"imediat\". Altfel urgency=NORMAL.\n- Detectează deadline explicit/relativ și normalizează YYYY-MM-DD, separat pentru fiecare task.\n- Determină responsibleUsers și requester, separat pentru fiecare task.\n- Descrie clar, pe scurt, ce se așteaptă de la persoana/persoanele menționate (expectedAction), separat pentru fiecare task.\n- Determină targetChannel dintre canalele disponibile enumerate mai sus, separat pentru fiecare task: dacă task-ul se referă clar la tema/departamentul unui canal din listă (ex: \"arhitectură\" -> canalul cu \"Arhitectura\" în nume), alege acel canal cu resolution BY_CONTEXT sau BY_NAME și channelName EXACT ca în listă. Dacă niciun canal din listă nu se potrivește clar, folosește ORIGINAL. Nu inventa un nume de canal care nu apare în lista de mai sus.\n\nSchema: {\"tasks\":[{\"messageType\":\"INFORMATIV|INTREBARE|SOLICITARE_ACTIUNE|TASK|REMINDER_ANTERIOR|CONFIRMARE|ESCALADARE|COORDONARE|FEEDBACK|ALTA\",\"requiresReply\":true,\"urgency\":\"NORMAL|URGENT\",\"confidence\":0.0,\"reason\":\"\",\"expectedAction\":\"\",\"responsibleUsers\":[{\"id\":\"\",\"displayName\":\"\"}],\"requester\":{\"id\":\"\",\"displayName\":\"\"},\"deadlineDetected\":false,\"deadlineType\":\"NONE|EXPLICIT_DATE|EXPLICIT_DATETIME|RELATIVE_DATE|VAGUE\",\"deadlineDate\":null,\"deadlineTime\":null,\"targetChannel\":{\"resolution\":\"ORIGINAL|BY_NAME|BY_CONTEXT|AMBIGUOUS\",\"channelName\":null,\"confidence\":0.0}}]}`}}"
+      },
+      "id": "f4b07ab8-db6f-4ab2-b74a-aa2db2bfd4ea",
+      "name": "Pregătește Context AI",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.aiPrompt }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Ești un asistent care analizează mesaje Microsoft Teams. Răspunde EXCLUSIV cu JSON valid, fără text suplimentar, fără code fences (```), respectând strict schema cerută."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "5c02f2e4-cad0-4f47-84c4-0f893b57a5d2",
+      "name": "AI - Clasifică Mențiunea",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        208,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-6",
+          "cachedResultName": "Claude Sonnet 4.6"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "279f778b-4368-4cf2-9fb8-2d7c50009e1e",
+      "name": "Model Claude (Anthropic)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.5,
+      "position": [
+        208,
+        480
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "fflhhB6wUjUS3uBb",
+          "name": "Anthropic account 9"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const source=$('Pregătește Context AI').item.json;let raw=$json.text??$json.output??$json.response??$json.content??$json;if(typeof raw==='object'){const parsed=raw;const tasks=Array.isArray(parsed.tasks)?parsed.tasks:[parsed];return{json:{...source,aiTasks:tasks,aiParseError:false}}}\nraw=String(raw).trim().replace(/^```json\\s*/i,'').replace(/```$/i,'').trim();\ntry{const parsed=JSON.parse(raw);const tasks=Array.isArray(parsed.tasks)?parsed.tasks:[parsed];return{json:{...source,aiTasks:tasks,aiParseError:false}}}catch(e){return{json:{...source,aiParseError:true,aiRaw:raw}}}"
+      },
+      "id": "a41d0f38-a0ba-4ac8-8578-4340bd0ebf3e",
+      "name": "Parsează Rezultatul AI",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items=$input.all(),out=[];\nfor(const it of items){const f=it.json;\n if(f.aiParseError){out.push({json:{...f,ai:{},taskIndex:0,tasksTotal:0}});continue;}\n const tasks=(Array.isArray(f.aiTasks)&&f.aiTasks.length)?f.aiTasks:[{}];\n tasks.forEach((t,idx)=>{out.push({json:{...f,ai:t,taskIndex:idx,tasksTotal:tasks.length}});});\n}\nreturn out;"
+      },
+      "id": "1066f39c-915d-43cb-bd8a-5dd514fb6a8c",
+      "name": "Desparte Task-urile din Mesaj",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "r",
+              "leftValue": "={{ $json.ai.requiresReply }}",
+              "operator": {
+                "operation": "true",
+                "type": "boolean",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "p",
+              "leftValue": "={{ $json.aiParseError }}",
+              "operator": {
+                "operation": "false",
+                "type": "boolean",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ca0cf375-d902-4226-8186-3cdafda37fd3",
+      "name": "Necesită Reply?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        656,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const f=$json,ai=f.ai||{},cfg=f.cfg||{},created=new Date(f.createdDateTime);\nlet reminderDate;\nif(ai.deadlineDetected&&ai.deadlineDate&&['EXPLICIT_DATE','EXPLICIT_DATETIME','RELATIVE_DATE'].includes(ai.deadlineType)){const d=new Date(ai.deadlineDate+'T00:00:00+03:00');d.setDate(d.getDate()-1);reminderDate=d.toISOString().slice(0,10);}else{const delay=ai.urgency==='URGENT'?Number(cfg.urgentReminderDelayDays??0):Number(cfg.defaultReminderDelayDays||2);const d=new Date(created);d.setDate(d.getDate()+delay);reminderDate=d.toISOString().slice(0,10);}\nconst now=new Date(),p=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Bucharest',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);const o={};for(const x of p)if(x.type!=='literal')o[x.type]=x.value;const today=`${o.year}-${o.month}-${o.day}`;\nreturn{json:{...f,reminderDate,reminderDue:today>=reminderDate,deadlineDate:ai.deadlineDate||null,deadlineTime:ai.deadlineTime||null}};"
+      },
+      "id": "b6c98dd6-9bbc-4dc2-8949-a70c8b5d0840",
+      "name": "Calculează Data Reminderului",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d",
+              "leftValue": "={{ $json.reminderDue }}",
+              "operator": {
+                "operation": "true",
+                "type": "boolean",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b452cd4b-64b9-433a-8f1e-f6ef15c3355d",
+      "name": "Este Scadent Reminderul?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1088,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.microsoft.com/v1.0/teams/{{ $json.teamId }}/channels/{{ $json.originalChannelId }}/messages/{{ $json.messageId }}/replies",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "66dcbe5c-c5e6-4a38-98ff-e783ec308ee4",
+      "name": "Obține Reply-uri Mesaj",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1312,
+        224
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items=$input.all(),out=[];for(let i=0;i<items.length;i++){const replies=items[i].json.value||[],f=$('Este Scadent Reminderul?').itemMatching(i).json,users=(f.ai?.responsibleUsers?.length?f.ai.responsibleUsers:f.mentions)||[],ids=new Set(replies.map(r=>r?.from?.user?.id).filter(Boolean)),missing=users.filter(u=>u?.id&&!ids.has(u.id));if(missing.length)out.push({json:{...f,responsibleUsers:missing}})}return out;"
+      },
+      "id": "168f420e-e770-464d-86d9-75eb80ad20ca",
+      "name": "Verifică Cine Nu a Răspuns",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "udfSyDrNA6Sb9jd6",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/udfSyDrNA6Sb9jd6",
+          "cachedResultName": "Teams - Avertizare Mențiuni - Trimitere Reminder"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "83aaa530-0f6a-4686-aea6-db284ece4de3",
+      "name": "Apelează Workflow Trimitere Reminder",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1744,
+        224
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Primește Mesaje cu Mențiuni": {
+      "main": [
+        [
+          {
+            "node": "Pregătește Context AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregătește Context AI": {
+      "main": [
+        [
+          {
+            "node": "AI - Clasifică Mențiunea",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI - Clasifică Mențiunea": {
+      "main": [
+        [
+          {
+            "node": "Parsează Rezultatul AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Model Claude (Anthropic)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI - Clasifică Mențiunea",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsează Rezultatul AI": {
+      "main": [
+        [
+          {
+            "node": "Desparte Task-urile din Mesaj",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Desparte Task-urile din Mesaj": {
+      "main": [
+        [
+          {
+            "node": "Necesită Reply?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Necesită Reply?": {
+      "main": [
+        [
+          {
+            "node": "Calculează Data Reminderului",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculează Data Reminderului": {
+      "main": [
+        [
+          {
+            "node": "Este Scadent Reminderul?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Este Scadent Reminderul?": {
+      "main": [
+        [
+          {
+            "node": "Obține Reply-uri Mesaj",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obține Reply-uri Mesaj": {
+      "main": [
+        [
+          {
+            "node": "Verifică Cine Nu a Răspuns",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifică Cine Nu a Răspuns": {
+      "main": [
+        [
+          {
+            "node": "Apelează Workflow Trimitere Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8c4e52c8-6c75-4be2-a9d2-9875f09ec0d4",
+  "meta": {
+    "instanceId": "a6884e6b2ddf8adc0c16b0503b06e4faaaa9137e91ba6022d296144979d7874a"
+  },
+  "nodeGroups": [],
+  "id": "8318SUsebSAILJFk",
+  "tags": []
+}

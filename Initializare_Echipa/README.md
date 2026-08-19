@@ -39,16 +39,8 @@ Inițializare Echipă - Utilizatori. Adaugă responsabilul de proiect ca owner a
 
 ![Membri](images/Membri.png)
 
-## Structura workflow-urilor (rezumat noduri)
+## Funcționalitate workflow
 
-**Workflow 1 — Inițializare Echipă**
-Webhook Formular Echipă → Normalizează Payload Webhook → Calculează Nume Echipă & Canale → Creează Echipa Teams → Extrage Team ID → Așteaptă Provisioning → (Apeleaza Workflow Utilizatori ‖ Pregateste Date Canale → Apeleaza Workflow Celelalte Canale → Pregateste Date Foldere → Apeleaza Workflow Foldere) → Așteaptă Finalizare → Confirmare Echipă Creată.
+La fiecare proiect nou câștigat, înființarea echipei pe Teams înseamnă, în mod normal, o serie întreagă de pași manuali, repetitivi și ușor de amânat sau uitat: crearea echipei, adăugarea pe rând a celor 18 canale obligatorii (plus eventuale canale suplimentare specifice proiectului), construirea structurii de foldere din Files pe fiecare canal relevant, redactarea și postarea mesajului inițial de organizare, adăugarea fiecărui membru din roster-ul standard cu rolul corect, și crearea sau completarea tagurilor Teams pe funcție pentru fiecare persoană. Făcut manual, acest proces poate dura ore întregi, depinde de disponibilitatea și atenția unei singure persoane, și e predispus la inconsecvențe — un canal uitat, un folder lipsă, un membru neadăugat la tagul lui de funcție, o denumire ușor diferită față de proiectul anterior.
 
-**Workflow 2 — Inițializare Echipă - Canale**
-Primeste Date din Workflow Echipa → (Canale Fixe Obligatorii (Lista) → Imparte Canale Fixe → Creeaza Canal Fix) ‖ (Imparte Canale Suplimentare → Creeaza Canal Suplimentar) → Asteapta Finalizare Canale → Listeaza Canale Echipa → Filtreaza Canal General → Posteaza Mesaj Initial → Confirmare Canale Finalizate.
-
-**Workflow 3 — Inițializare Echipă - Foldere**
-Primeste Date din Workflow Principal → Asteapta Provizionare Foldere Canale → Obtine Canale Echipa → Construieste Lista Foldere pe Canal → Obtine Folder Fisiere Canal → Pregateste Date Canal Foldere → Imparte Foldere de Creat → Calculeaza Parinte si Nume → Creeaza Folder → Confirmare Foldere Create.
-
-**Workflow 4 — Inițializare Echipă - Utilizatori**
-Primeste Date din Workflow Canale → (Adauga Responsabil ca Owner) ‖ (Citeste Roster Fix din Excel → Adauga Membru din Roster la Echipa → Filtreaza Randuri cu Tag → Proceseaza Taguri → [Cauta Tag Existent → Tag Exista? → Adauga la Tag Existent / Creeaza Tag Nou]) → Asteapta Finalizare Utilizatori → Confirmare Utilizatori Adaugati.
+Cu acest sistem, tot procesul se reduce la completarea unui formular cu datele de bază ale proiectului (cod, nume, firmă, amplasament, responsabil) și un singur click. În câteva minute, fără nicio intervenție ulterioară, echipa există complet și identic structurată ca toate celelalte proiecte ale companiei: aceleași canale, aceeași organizare de foldere, același mesaj de bun venit, aceiași membri standard adăugați cu rolul corect și cu tag pe funcție. Standardizarea asta contează dublu — pe de o parte, orice persoană nouă care intră pe un proiect găsește aceeași structură familiară, indiferent cine a inițializat echipa; pe de altă parte, timpul unei persoane responsabile de proiecte (de multe ori un manager sau un coordonator, a cărui oră costă mult mai mult decât durata unei sarcini administrative) nu se mai duce pe muncă repetitivă, ci rămâne disponibil pentru lucruri care chiar au nevoie de judecată și experiență.

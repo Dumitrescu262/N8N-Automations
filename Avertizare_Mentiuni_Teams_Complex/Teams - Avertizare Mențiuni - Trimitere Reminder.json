@@ -1,0 +1,382 @@
+{
+  "name": "Teams - Avertizare Mențiuni - Trimitere Reminder",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "f028325c-6209-45db-81fe-235eea33b6fb",
+      "name": "Primește Remindere de Trimis",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const f=$json;const ai=f.ai||{};const t=ai.targetChannel||{};const name=t.resolution==='ORIGINAL'||!t.channelName?f.originalChannelName:t.channelName;const stableUsers=(ai.responsibleUsers||[]).map(u=>u&&u.id).filter(Boolean).sort().join(',');const key=`${f.teamId}:${f.messageId}:${name.toLowerCase()}:${stableUsers}`;return{json:{...f,targetChannelName:name,targetChannelResolution:t.resolution||'ORIGINAL',notificationKey:key}}"
+      },
+      "id": "62e26580-e0b0-4f00-9fae-2907af86f67a",
+      "name": "Pregătește Canalul și Cheia",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items=$input.all();const seen=new Set();const out=[];\nfor(const it of items){const f=it.json;\n if(f.notificationKey){if(seen.has(f.notificationKey))continue;seen.add(f.notificationKey);out.push(it);continue;}\n const users=((f.ai&&f.ai.responsibleUsers)||[]).map(u=>u.id).filter(Boolean).sort().join(',');\n const chan=String(f.targetChannelName||'').trim().toLowerCase();\n const key=`${f.teamId}:${f.messageId}:${chan}:${users}`;\n if(seen.has(key))continue;\n seen.add(key);\n out.push(it);\n}\nreturn out;"
+      },
+      "id": "d3e31d28-3d1f-4d3a-b352-43798b4974f6",
+      "name": "Elimină Task-uri Duplicate (Același Canal)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a",
+              "leftValue": "={{ $json.targetChannelResolution }}",
+              "operator": {
+                "operation": "notEquals",
+                "type": "string",
+                "rightValue": "AMBIGUOUS"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "cc9e75f8-5849-42c5-b138-7fe47a22b541",
+      "name": "Canal Determinat",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const f=$json;const w=String(f.targetChannelName||'').trim().toLowerCase();const matches=(f.teamChannels||[]).filter(c=>String(c.channelName||'').trim().toLowerCase()===w);if(matches.length!==1)return{json:{...f,channelResolutionError:true}};return{json:{...f,targetChannelId:matches[0].channelId,targetChannelName:matches[0].channelName,channelResolutionError:false}}"
+      },
+      "id": "5c1345fa-4b06-4ddc-b44d-22e17606fd3d",
+      "name": "Rezolvă ID Canal (din cache)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const f=$json;if(f.channelResolutionError)return{json:{...f,skipSend:true}};const mentions=[];const at=u=>{const i=mentions.length;mentions.push({id:i,mentionText:u.displayName,mentioned:{user:{id:u.id,displayName:u.displayName,userIdentityType:'aadUser'}}});return`<at id=\"${i}\">${u.displayName}</at>`};const responsible=(f.responsibleUsers||[]).filter(u=>u?.id);const sender=(f.authorId&&f.authorName)?{id:f.authorId,displayName:f.authorName}:null;const r=responsible.map(at).join(', ');let s='';if(sender&&!responsible.some(u=>u.id===sender.id)){s=at(sender);}const urgentPrefix=f.ai?.urgency==='URGENT'?'[URGENT] ':'';const content=`${urgentPrefix}${r}${s?' '+s:''} — reminder: solicitarea din mesajul inițial nu are încă un reply din partea persoanei responsabile.${f.deadlineDate?' Termen: '+f.deadlineDate+(f.deadlineTime?' '+f.deadlineTime:'')+'.':''}${f.ai?.expectedAction?' Se așteaptă: '+f.ai.expectedAction+'.':''}`;return{json:{...f,skipSend:false,replyContent:content,replyMentions:mentions}}"
+      },
+      "id": "f22f45af-27bc-4695-b9c4-17a1a970914f",
+      "name": "Compune Reminder cu Mențiuni",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "s",
+              "leftValue": "={{ $json.skipSend }}",
+              "operator": {
+                "operation": "false",
+                "type": "boolean",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f5146a4f-dd5b-4def-abd7-4da8abc6741e",
+      "name": "Poate Trimite",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1792,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "rowNotExists",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "hkcOEOQJKJE6mWBx",
+          "cachedResultName": "teams_mention_reminders"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "notificationKey",
+              "keyValue": "={{ $json.notificationKey }}"
+            }
+          ]
+        }
+      },
+      "id": "a9bffce0-1cf3-4d54-a496-e8bc4ba407aa",
+      "name": "Verifică Anti-Duplicare",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2016,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.microsoft.com/v1.0/teams/{{ $json.teamId }}/channels/{{ $json.targetChannelId }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ body: { contentType: 'html', content: $json.replyContent }, mentions: $json.replyMentions }) }}",
+        "options": {}
+      },
+      "id": "4fc8a538-087e-469a-b728-d51ba6150eee",
+      "name": "Trimite Reminder în Canalul Țintă",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2240,
+        -32
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "hkcOEOQJKJE6mWBx",
+          "cachedResultName": "teams_mention_reminders"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "notificationKey": "={{ $('Compune Reminder cu Mențiuni').item.json.notificationKey }}",
+            "teamName": "={{ $('Compune Reminder cu Mențiuni').item.json.teamName }}",
+            "channelName": "={{ $('Compune Reminder cu Mențiuni').item.json.targetChannelName }}",
+            "mentionedUserName": "={{ $('Compune Reminder cu Mențiuni').item.json.responsibleUsers.map(u=>u.displayName).join(', ') }}",
+            "messageId": "={{ $('Compune Reminder cu Mențiuni').item.json.messageId }}",
+            "notifiedAt": "={{ $now.toISO() }}"
+          },
+          "schema": [
+            {
+              "id": "notificationKey",
+              "displayName": "notificationKey",
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "teamName",
+              "displayName": "teamName",
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "channelName",
+              "displayName": "channelName",
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mentionedUserName",
+              "displayName": "mentionedUserName",
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "messageId",
+              "displayName": "messageId",
+              "type": "string",
+              "display": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notifiedAt",
+              "displayName": "notifiedAt",
+              "type": "dateTime",
+              "display": true,
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4d27ff18-6006-455c-953d-1560b0fe2e38",
+      "name": "Înregistrează Reminderul",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2448,
+        -32
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Primește Remindere de Trimis": {
+      "main": [
+        [
+          {
+            "node": "Pregătește Canalul și Cheia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregătește Canalul și Cheia": {
+      "main": [
+        [
+          {
+            "node": "Elimină Task-uri Duplicate (Același Canal)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Elimină Task-uri Duplicate (Același Canal)": {
+      "main": [
+        [
+          {
+            "node": "Canal Determinat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canal Determinat": {
+      "main": [
+        [
+          {
+            "node": "Rezolvă ID Canal (din cache)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rezolvă ID Canal (din cache)": {
+      "main": [
+        [
+          {
+            "node": "Compune Reminder cu Mențiuni",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compune Reminder cu Mențiuni": {
+      "main": [
+        [
+          {
+            "node": "Poate Trimite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poate Trimite": {
+      "main": [
+        [
+          {
+            "node": "Verifică Anti-Duplicare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifică Anti-Duplicare": {
+      "main": [
+        [
+          {
+            "node": "Trimite Reminder în Canalul Țintă",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trimite Reminder în Canalul Țintă": {
+      "main": [
+        [
+          {
+            "node": "Înregistrează Reminderul",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "78a318b6-1ef9-4a09-b32c-66cc002b1afb",
+  "meta": {
+    "instanceId": "a6884e6b2ddf8adc0c16b0503b06e4faaaa9137e91ba6022d296144979d7874a"
+  },
+  "nodeGroups": [],
+  "id": "udfSyDrNA6Sb9jd6",
+  "tags": []
+}

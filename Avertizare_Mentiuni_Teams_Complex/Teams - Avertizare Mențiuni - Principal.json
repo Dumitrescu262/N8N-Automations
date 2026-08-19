@@ -1,0 +1,480 @@
+{
+  "name": "Teams - Avertizare Mențiuni - Principal",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8-18 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "cd456469-8253-4542-9715-537ce6dd3435",
+      "name": "Programare - din oră în oră (8-18)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -128,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c1",
+              "name": "defaultReminderDelayDays",
+              "type": "number",
+              "value": 2
+            },
+            {
+              "id": "c2",
+              "name": "maxLookbackDays",
+              "type": "number",
+              "value": 14
+            },
+            {
+              "id": "c3",
+              "name": "messagesPerChannel",
+              "type": "number",
+              "value": 50
+            },
+            {
+              "id": "c4",
+              "name": "deadlineReminderHour",
+              "type": "number",
+              "value": 8
+            },
+            {
+              "id": "c5",
+              "name": "projectTeamNameRegex",
+              "type": "string",
+              "value": "^\\d{7}(?:\\D|$)"
+            },
+            {
+              "id": "c6",
+              "name": "urgentReminderDelayDays",
+              "type": "number",
+              "value": 0
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0cebd41a-6963-491f-b35a-03cb4d6e7b25",
+      "name": "Configurare",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        64,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const sd=$getWorkflowStaticData('global');sd.allChannels=[];return $input.all();"
+      },
+      "id": "16bf8f03-9945-4487-aae8-55cf305f422f",
+      "name": "Resetează Acumulator Canale",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://graph.microsoft.com/v1.0/me/joinedTeams",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "f0baf9a0-d2b9-4231-b236-d5bda10eaf79",
+      "name": "Obține Echipele Mele",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "value",
+        "options": {}
+      },
+      "id": "d97155cb-b700-4d83-8ec9-5fdd51d85057",
+      "name": "Extrage Echipele",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "p",
+              "leftValue": "={{ $json.displayName }}",
+              "operator": {
+                "operation": "regex",
+                "type": "string"
+              },
+              "rightValue": "^\\d{7}(?:\\D|$)"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6f705cce-fd1d-4bc4-af34-a236258d2da0",
+      "name": "Filtrează Echipele cu exact 7 cifre la început",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "2a338b8d-4947-4212-a6dd-e113c591a0b1",
+      "name": "Buclă Echipe",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1104,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.microsoft.com/v1.0/teams/{{ $json.id }}/channels",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "options": {}
+      },
+      "id": "1cc03f9c-36df-46ee-b355-f1b3ba22b5d4",
+      "name": "Obține Canale",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1360,
+        176
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items=$input.all();const teamItem=$('Buclă Echipe').first().json;const sd=$getWorkflowStaticData('global');if(!Array.isArray(sd.allChannels))sd.allChannels=[];let count=0;for(const it of items){for(const ch of(it.json.value||[])){sd.allChannels.push({teamId:teamItem.id,teamName:teamItem.displayName,channelId:ch.id,channelName:ch.displayName});count++;}}return [{json:{teamId:teamItem.id,teamName:teamItem.displayName,channelsFound:count}}];"
+      },
+      "id": "9a03fbe5-abd3-4907-b43a-9b4c5a93d91e",
+      "name": "Pregătește Lista Canalelor",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const sd=$getWorkflowStaticData('global');const list=Array.isArray(sd.allChannels)?sd.allChannels:[];const byTeam={};for(const ch of list){(byTeam[ch.teamId]=byTeam[ch.teamId]||[]).push({channelId:ch.channelId,channelName:ch.channelName});}return list.map(ch=>({json:{...ch,teamChannels:byTeam[ch.teamId]||[]}}));"
+      },
+      "id": "bed5ebfd-95b8-4804-a2ff-c2bcb58b6c78",
+      "name": "Citește Toate Canalele",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "faffab12-8a11-4cb3-b111-3f09731038b0",
+      "name": "Buclă Canale",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1760,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.microsoft.com/v1.0/teams/{{ $json.teamId }}/channels/{{ $json.channelId }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftTeamsOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "$top",
+              "value": "={{ $('Configurare').first().json.messagesPerChannel }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "51811a7a-66ad-442e-a105-714e9d1ef813",
+      "name": "Obține Mesaje Canal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1984,
+        0
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "lUB1iQvR7IWOHM4q",
+          "name": "Microsoft Teams account 24"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items=$input.all(),out=[];\nconst cfg=$('Configurare').first().json;\nfor(let i=0;i<items.length;i++){const resp=items[i].json,ch=$('Buclă Canale').itemMatching(i).json;\n for(const m of(resp.value||[])){if(m.deletedDateTime||!m.mentions?.length)continue;\n  const hasWide=m.mentions.some(x=>x?.mentioned?.team||x?.mentioned?.channel||x?.mentioned?.tag||x?.mentioned?.conversation||x?.mentioned?.group);\n  if(hasWide)continue;\n  const seen=new Set(),mentions=[]; for(const x of m.mentions){const u=x?.mentioned?.user;if(u?.id&&!seen.has(u.id)){seen.add(u.id);mentions.push({id:u.id,displayName:u.displayName||x.mentionText||''});}}\n  if(!mentions.length)continue;\n  out.push({json:{teamId:ch.teamId,teamName:ch.teamName,originalChannelId:ch.channelId,originalChannelName:ch.channelName,teamChannels:ch.teamChannels||[],cfg,messageId:m.id,createdDateTime:m.createdDateTime,webUrl:m.webUrl||'',messageBodyHtml:m.body?.content||'',authorId:m.from?.user?.id||'',authorName:m.from?.user?.displayName||'',mentions}});\n }} return out;"
+      },
+      "id": "3c2c1f88-c13b-4ad7-a85a-4af428dbf06c",
+      "name": "Extrage Mesaje cu Mențiuni Persoană",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2208,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "8318SUsebSAILJFk",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/8318SUsebSAILJFk",
+          "cachedResultName": "Teams - Avertizare Mențiuni - Clasificare AI"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "3f48480a-5bd3-4aa2-a0b8-bf3a4a384778",
+      "name": "Apelează Workflow Clasificare AI",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        2448,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Programare - din oră în oră (8-18)": {
+      "main": [
+        [
+          {
+            "node": "Configurare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configurare": {
+      "main": [
+        [
+          {
+            "node": "Resetează Acumulator Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resetează Acumulator Canale": {
+      "main": [
+        [
+          {
+            "node": "Obține Echipele Mele",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obține Echipele Mele": {
+      "main": [
+        [
+          {
+            "node": "Extrage Echipele",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrage Echipele": {
+      "main": [
+        [
+          {
+            "node": "Filtrează Echipele cu exact 7 cifre la început",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtrează Echipele cu exact 7 cifre la început": {
+      "main": [
+        [
+          {
+            "node": "Buclă Echipe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buclă Echipe": {
+      "main": [
+        [
+          {
+            "node": "Citește Toate Canalele",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Obține Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obține Canale": {
+      "main": [
+        [
+          {
+            "node": "Pregătește Lista Canalelor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregătește Lista Canalelor": {
+      "main": [
+        [
+          {
+            "node": "Buclă Echipe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Citește Toate Canalele": {
+      "main": [
+        [
+          {
+            "node": "Buclă Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buclă Canale": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Obține Mesaje Canal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obține Mesaje Canal": {
+      "main": [
+        [
+          {
+            "node": "Extrage Mesaje cu Mențiuni Persoană",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Buclă Canale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrage Mesaje cu Mențiuni Persoană": {
+      "main": [
+        [
+          {
+            "node": "Apelează Workflow Clasificare AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8e8492a1-8c0e-4631-bf14-e89bf6dda5de",
+  "meta": {
+    "instanceId": "a6884e6b2ddf8adc0c16b0503b06e4faaaa9137e91ba6022d296144979d7874a"
+  },
+  "nodeGroups": [],
+  "id": "gCFgkBUK1UJ5Xmxw",
+  "tags": []
+}
